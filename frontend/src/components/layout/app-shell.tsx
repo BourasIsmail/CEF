@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { BookOpen, Building2, CalendarDays, LayoutDashboard, LogOut, Menu, UserRound, UsersRound, X, type LucideIcon } from "lucide-react";
+import { BookOpen, Building2, GraduationCap, CalendarDays, LayoutDashboard, LogOut, Menu, UserRound, UsersRound, X, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
@@ -15,6 +15,7 @@ interface NavItem { href: string; label: MessageKey; icon: LucideIcon; show?: (u
 
 const NAV: NavItem[] = [
   { href: "/", label: "nav.dashboard", icon: LayoutDashboard },
+  { href: "/beneficiaries", label: "nav.beneficiaries", icon: GraduationCap },
   { href: "/centers", label: "nav.centers", icon: Building2 },
   { href: "/filieres", label: "nav.filieres", icon: BookOpen },
   { href: "/seasons", label: "nav.seasons", icon: CalendarDays, show: can.admin },

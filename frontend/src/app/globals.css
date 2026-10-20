@@ -55,3 +55,11 @@ body {
 dialog::backdrop {
   background: rgb(20 35 43 / 0.5);
 }
+
+/* Impression (bulletin) : on masque la navigation, le contenu seul reste. */
+@media print {
+  aside, header.sticky { display: none !important; }
+  body { background: white; }
+  main { padding: 0 !important; max-width: none !important; }
+  .lg\:ps-64 { padding-inline-start: 0 !important; }
+}
