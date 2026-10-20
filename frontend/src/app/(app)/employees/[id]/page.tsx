@@ -100,6 +100,11 @@ export default function EmployeeDetailPage() {
             {e.otherQualifications && <Info label={t("hr.field.otherQualifications")}>{e.otherQualifications}</Info>}
           </dl>
         </Card>
+        {e.extras.length > 0 && (
+          <Card title={t("hr.extras.title")}>
+            <dl>{e.extras.map((x) => <Info key={x.id} label={x.label}>{x.value}</Info>)}</dl>
+          </Card>
+        )}
         <AssignmentsCard employee={e} writer={writer} />
         <TeachingCard employee={e} writer={writer} />
         <GuestContractsCard employee={e} writer={writer} />

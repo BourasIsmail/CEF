@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import jakarta.validation.constraints.Email;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -59,7 +60,15 @@ public final class EmployeeDtos {
             @Size(max = 20) String enScale,
             @Size(max = 30) String rankNumber,
             LocalDate hireDate,
-            ActivityStatus activityStatus) {
+            ActivityStatus activityStatus,
+            /** Informations administratives libres ; {@code null} = inchangées, liste vide = toutes supprimées. */
+            @Valid List<ExtraRequest> extras) {
+    }
+
+    public record ExtraRequest(@NotBlank @Size(max = 150) String label, @Size(max = 500) String value) {
+    }
+
+    public record ExtraView(Long id, String label, String value) {
     }
 
     public record Filter(
@@ -87,6 +96,7 @@ public final class EmployeeDtos {
             String experienceDescription, String otherQualifications,
             String enGrade, String enScale, String rankNumber, LocalDate hireDate, ActivityStatus activityStatus,
             List<AssignmentView> assignments, List<TeachingView> teachings, List<GuestContractView> guestContracts,
+            List<ExtraView> extras,
             Instant createdAt, Instant updatedAt, String createdBy, String updatedBy) {
     }
 

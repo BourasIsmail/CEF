@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import { OptionField } from "@/components/ui/option-group";
@@ -34,6 +34,8 @@ interface Values {
   enGrade: string; enScale: string; rankNumber: string; hireDate: string; activityStatus: string;
   // معطيات المكوّن المستضاف
   gSeasonId: string; gFiliereId: string; gDiplomaYear: string; gStart: string; gRate: string; gMonths: string; gHours: string; gCount: string;
+  // معلومات إدارية إضافية
+  extras: { label: string; value: string }[];
 }
 
 function initial(e?: EmployeeDetail): Values {
@@ -50,6 +52,7 @@ function initial(e?: EmployeeDetail): Values {
     enGrade: e?.enGrade ?? "", enScale: e?.enScale ?? "", rankNumber: e?.rankNumber ?? "", hireDate: e?.hireDate ?? "", activityStatus: e?.activityStatus ?? "ACTIVE",
     gSeasonId: s(g?.seasonId), gFiliereId: s(g?.filiereId), gDiplomaYear: s(g?.diplomaYear), gStart: g?.workStartDate ?? "",
     gRate: s(g?.hourlyRateMad), gMonths: s(g?.monthsPerYear), gHours: s(g?.hoursPerMonth), gCount: s(g?.beneficiariesCount),
+    extras: (e?.extras ?? []).map((x) => ({ label: x.label, value: x.value ?? "" })),
   };
 }
 
@@ -66,6 +69,7 @@ export function EmployeeForm({ employee }: { employee?: EmployeeDetail }) {
   const [formError, setFormError] = useState<string>();
   const { register, handleSubmit, control, setError, formState: { errors } } = useForm<Values>({ defaultValues: initial(employee) });
   const v = useWatch({ control });
+  const extras = useFieldArray({ control, name: "extras" });
   const centers = useCentersOptions();
   const provinces = useProvinces();
   const seasons = useSeasons();
@@ -112,6 +116,7 @@ export function EmployeeForm({ employee }: { employee?: EmployeeDetail }) {
         diplomaDate: f.diplomaDate || undefined, experienceDescription: f.experienceDescription || undefined, otherQualifications: f.otherQualifications || undefined,
         enGrade: en ? f.enGrade || undefined : undefined, enScale: en ? f.enScale || undefined : undefined,
         rankNumber: en ? f.rankNumber : undefined, hireDate: f.hireDate || undefined, activityStatus: f.activityStatus,
+        extras: f.extras.filter((x) => x.label.trim()).map((x) => ({ label: x.label.trim(), value: x.value.trim() || undefined })),
       };
       const saved = employee
         ? await api<EmployeeDetail>(`/employees/${employee.id}`, { method: "PUT", body })
@@ -275,6 +280,23 @@ export function EmployeeForm({ employee }: { employee?: EmployeeDetail }) {
           <Field label={t("hr.guest.countLong")}><Input type="number" min={0} className="ltr-field" disabled={!guest} {...register("gCount")} /></Field>
         </div>
       </NumberedSection>
+
+      <section className="space-y-4 rounded-xl border border-dashed border-line bg-white p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-[17px] font-semibold">{t("hr.extras.title")}</h2>
+            <p className="mt-1 text-sm text-muted">{t("hr.extras.hint")}</p>
+          </div>
+          <Button variant="secondary" onClick={() => extras.append({ label: "", value: "" })}>+ {t("hr.extras.add")}</Button>
+        </div>
+        {extras.fields.map((f, i) => (
+          <div key={f.id} className="grid items-end gap-3 sm:grid-cols-[1fr_2fr_auto]">
+            <Field label={t("hr.extras.label")}><Input {...register(`extras.${i}.label` as const)} /></Field>
+            <Field label={t("hr.extras.value")}><Input {...register(`extras.${i}.value` as const)} /></Field>
+            <Button variant="ghost" onClick={() => extras.remove(i)} aria-label={t("common.delete")}>{t("common.delete")}</Button>
+          </div>
+        ))}
+      </section>
 
       <div className="flex justify-start gap-3 pt-2">
         <Button type="submit" loading={save.isPending} className="min-h-12 px-7">{employee ? t("ben.saveChanges") : t("common.save")}</Button>

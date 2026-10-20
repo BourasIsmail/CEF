@@ -195,7 +195,7 @@ de sa province et de sa région.
 |---|---|---|
 | GET | `/employees` | liste paginée : `search` (nom, n° d'ordre, pièce d'identité, téléphone), `regionId`, `provinceId`, `centerId`, `type`, `administrativeStatus`, `activityStatus`, `gender`, `withoutCenter` ; tris `nameAr`, `nameFr`, `type`, `administrativeStatus`, `center`, `rankNumber`, `hireDate`, `activityStatus` |
 | GET | `/employees/summary` | effectifs calculés (hors retraités) : total, sexe, par صفة, par وضعية إدارية ; filtres région / province / centre |
-| GET/POST | `/employees`, `/employees/{id}` (GET, PUT, DELETE) | fiche complète avec affectations, enseignement et prestations |
+| GET/POST | `/employees`, `/employees/{id}` (GET, PUT, DELETE) | fiche complète avec affectations, enseignement, prestations et `extras` (informations administratives libres `{label, value}` : champ absent = inchangé, liste vide = tout supprimer) |
 | GET | `/employees/{id}/history` | journal d'audit de la fiche et de ses éléments |
 | POST | `/employees/{id}/transfers` | mutation : clôt l'affectation en cours la veille de `fromDate`, en ouvre une nouvelle |
 | POST/DELETE | `/employees/{id}/teachings[/{tid}]` | هيئة التكوين : filière entière ou un module, par saison |

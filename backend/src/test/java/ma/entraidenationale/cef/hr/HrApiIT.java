@@ -43,6 +43,28 @@ class HrApiIT extends AbstractApiIT {
         return jdbc.queryForObject("SELECT id FROM training_season WHERE label = '2025-2026'", Long.class);
     }
 
+    @Test
+    void extraAdministrativeInfoIsReplacedWithTheRecordAndKeptWhenOmitted() throws Exception {
+        String json = body(centerId("CAS-01"), "\"extras\": [{\"label\": \"رقم الضمان الاجتماعي\", \"value\": \"123456\"}, {\"label\": \"ملاحظة\"}]");
+        String created = create(provincial("0601"), json).andExpect(status().isCreated())
+                .andExpect(jsonPath("$.extras.length()").value(2))
+                .andExpect(jsonPath("$.extras[0].label").value("رقم الضمان الاجتماعي"))
+                .andExpect(jsonPath("$.extras[0].value").value("123456"))
+                .andExpect(jsonPath("$.extras[1].value").doesNotExist())
+                .andReturn().getResponse().getContentAsString();
+        long id = ((Number) com.jayway.jsonpath.JsonPath.read(created, "$.id")).longValue();
+
+        // champ absent : liste inchangée ; liste vide : tout est supprimé ; libellé vide : refusé
+        mvc.perform(put("/api/employees/" + id).with(provincial("0601")).contentType(APPLICATION_JSON).content(body(centerId("CAS-01"), "")))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.extras.length()").value(2));
+        mvc.perform(put("/api/employees/" + id).with(provincial("0601")).contentType(APPLICATION_JSON)
+                .content(body(centerId("CAS-01"), "\"extras\": [{\"label\": \" \", \"value\": \"x\"}]")))
+                .andExpect(status().isBadRequest());
+        mvc.perform(put("/api/employees/" + id).with(provincial("0601")).contentType(APPLICATION_JSON)
+                .content(body(centerId("CAS-01"), "\"extras\": []")))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.extras.length()").value(0));
+    }
+
     // ------------------------------------------------------------------ périmètre et droits
 
     @Test

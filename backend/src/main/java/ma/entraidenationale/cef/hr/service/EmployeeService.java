@@ -25,6 +25,8 @@ import ma.entraidenationale.cef.common.ConflictException;
 import ma.entraidenationale.cef.common.NotFoundException;
 import ma.entraidenationale.cef.common.PageResponse;
 import ma.entraidenationale.cef.hr.api.EmployeeDtos.AssignmentView;
+import ma.entraidenationale.cef.hr.api.EmployeeDtos.ExtraRequest;
+import ma.entraidenationale.cef.hr.api.EmployeeDtos.ExtraView;
 import ma.entraidenationale.cef.hr.api.EmployeeDtos.Detail;
 import ma.entraidenationale.cef.hr.api.EmployeeDtos.Filter;
 import ma.entraidenationale.cef.hr.api.EmployeeDtos.GuestContractRequest;
@@ -114,6 +116,7 @@ public class EmployeeService {
 
         LocalDate from = e.getHireDate() != null ? e.getHireDate() : LocalDate.now();
         insertAssignment(e, from, center, null, null);
+        replaceExtras(e.getId(), req.extras());
         return toDetail(e);
     }
 
@@ -138,6 +141,7 @@ public class EmployeeService {
         apply(e, req);
         employees.saveAndFlush(e);
         audit.updated(AUDIT_TYPE, e.getId(), AUDIT_TYPE, e.getId(), before, snapshot(e));
+        replaceExtras(e.getId(), req.extras());
         return toDetail(e);
     }
 
@@ -470,8 +474,29 @@ public class EmployeeService {
                 e.getEducationLevel(), e.getDiplomaTitle(), e.getSpecialty(), e.getDiplomaDate(),
                 e.getExperienceDescription(), e.getOtherQualifications(),
                 e.getEnGrade(), e.getEnScale(), e.getRankNumber(), e.getHireDate(), e.getActivityStatus(),
-                assignmentsOf(e.getId()), teachingsOf(e.getId()), guestContractsOf(e.getId()),
+                assignmentsOf(e.getId()), teachingsOf(e.getId()), guestContractsOf(e.getId()), extrasOf(e.getId()),
                 e.getCreatedAt(), e.getUpdatedAt(), e.getCreatedBy(), e.getUpdatedBy());
+    }
+
+    private List<ExtraView> extrasOf(Long employeeId) {
+        return jdbc.query("SELECT id, label, value FROM employee_extra WHERE employee_id = :id ORDER BY position, id",
+                new MapSqlParameterSource("id", employeeId),
+                (rs, i) -> new ExtraView(rs.getLong("id"), rs.getString("label"), rs.getString("value")));
+    }
+
+    /** Remplace la liste des informations libres ; {@code null} laisse la liste inchangée. */
+    private void replaceExtras(Long employeeId, List<ExtraRequest> extras) {
+        if (extras == null) {
+            return;
+        }
+        jdbc.update("DELETE FROM employee_extra WHERE employee_id = :id", new MapSqlParameterSource("id", employeeId));
+        int position = 0;
+        for (ExtraRequest x : extras) {
+            jdbc.update("INSERT INTO employee_extra (employee_id, label, value, position) VALUES (:emp, :label, :value, :pos)",
+                    new MapSqlParameterSource("emp", employeeId).addValue("label", x.label().trim())
+                            .addValue("value", x.value() == null || x.value().isBlank() ? null : x.value().trim())
+                            .addValue("pos", position++));
+        }
     }
 
     private List<AssignmentView> assignmentsOf(Long employeeId) {

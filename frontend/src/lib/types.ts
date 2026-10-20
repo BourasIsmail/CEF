@@ -217,7 +217,7 @@ export interface EmployeeDetail {
   birthDate?: string; birthPlace?: string; idDocumentType?: string; idDocumentNumber?: string; address?: string; phone?: string; email?: string;
   educationLevel?: string; diplomaTitle?: string; specialty?: string; diplomaDate?: string; experienceDescription?: string; otherQualifications?: string;
   enGrade?: string; enScale?: string; rankNumber?: string; hireDate?: string; activityStatus: ActivityStatus;
-  assignments: AssignmentView[]; teachings: TeachingView[]; guestContracts: GuestContractView[];
+  assignments: AssignmentView[]; teachings: TeachingView[]; guestContracts: GuestContractView[]; extras: { id: number; label: string; value?: string }[];
   createdAt: string; updatedAt: string; createdBy?: string; updatedBy?: string;
 }
 
