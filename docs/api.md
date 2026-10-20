@@ -253,3 +253,48 @@ compte ni changer son propre profil, et le dernier administrateur actif ne peut 
 Changer le profil ou la portée, désactiver ou réinitialiser le mot de passe révoque les sessions de l'utilisateur
 (un jeton d'accès déjà émis reste valable jusqu'à son expiration, 15 min au plus). Toutes ces opérations sont tracées
 dans l'audit, sans jamais y écrire de mot de passe ou de hash.
+
+---
+
+# API — demandes de filière
+
+Circuit : **province** (prépare et dépose) → **région** (valide) → **national** (approuve) → la filière est créée dans
+le catalogue **et** affectée au centre (création) ou mise à jour (modification).
+
+```
+DRAFT ──submit──▶ SUBMITTED ──regional-validation──▶ REGIONAL_VALIDATED ──approval──▶ APPROVED
+  ▲                │   │  ▲                                  │
+  └───withdraw─────┘   │  └─── correction + submit ── RETURNED ◀── return (commentaire obligatoire) ──┤
+                       └───────────────────────────── REJECTED ◀── rejection (commentaire obligatoire, définitif)
+```
+
+| Méthode | Chemin | Profil | Description |
+|---|---|---|---|
+| GET | `/filiere-requests` | tous | liste paginée : `search`, `status`, `type`, `regionId`, `provinceId`, `centerId`, `actionable=true` (file d'attente du profil) ; tris `number`, `status`, `type`, `center`, `name`, `createdAt`, `submittedAt` |
+| GET | `/filiere-requests/counts` | tous | nombre de demandes par statut |
+| GET | `/filiere-requests/document-types` | tous | les 8 pièces attendues |
+| GET | `/filiere-requests/{id}` | tous | dossier : pièces (une entrée par type), historique du circuit, `availableActions` du profil courant |
+| GET | `/filiere-requests/{id}/history` | tous | journal d'audit (dossier et pièces) |
+| POST/PUT/DELETE | `/filiere-requests[/{id}]` | ADMIN, PROVINCIAL | brouillon (suppression : brouillon seulement) |
+| POST | `/filiere-requests/{id}/documents/{typeCode}` | ADMIN, PROVINCIAL | `multipart/form-data`, champ `file` ; remplace la pièce du même type |
+| GET | `/filiere-requests/{id}/documents/{documentId}` | tous | téléchargement (PDF, `attachment`) |
+| DELETE | `/filiere-requests/{id}/documents/{documentId}` | ADMIN, PROVINCIAL | brouillon ou demande renvoyée seulement |
+| POST | `/filiere-requests/{id}/submit` | ADMIN, PROVINCIAL | dépôt (DRAFT / RETURNED → SUBMITTED) |
+| POST | `/filiere-requests/{id}/withdraw` | ADMIN, PROVINCIAL | retrait (SUBMITTED → DRAFT) |
+| POST | `/filiere-requests/{id}/regional-validation` | REGIONAL (sa région), ADMIN | `{comment?}` |
+| POST | `/filiere-requests/{id}/approval` | ADMIN | `{comment?, code?, nameFr?}` : code généré (`F2026-0007`) s'il est absent |
+| POST | `/filiere-requests/{id}/return`, `/rejection` | REGIONAL (à l'étape SUBMITTED), ADMIN | `{comment}` obligatoire |
+
+Règles :
+- **Pièces** : 8 types (`request_document_type`), toutes obligatoires au dépôt (422 `request.documents_missing`, avec les
+  codes manquants). **PDF uniquement** (contrôle de l'en-tête `%PDF-`, pas seulement de l'extension), **20 Mo maximum**
+  (422 `document.too_large`, 413 au-delà de la limite multipart). Le fichier est stocké sous un nom généré (UUID) dans le
+  volume `FILE_STORAGE_DIR` ; le nom d'origine n'est qu'un libellé. Empreinte SHA-256 conservée.
+- **Création** : nom arabe obligatoire, absent du catalogue (422 `request.filiere_exists`) ; durée obligatoire au dépôt ;
+  association facultative mais liée au centre. **Modification** : filière visée déjà proposée par le centre, résumé des
+  modifications obligatoire au dépôt ; les champs non renseignés gardent la valeur actuelle.
+- **Droits** : le type et le centre ne changent plus après la création ; la demande n'est modifiable qu'en DRAFT / RETURNED.
+  Un compte régional ne voit jamais les brouillons. L'administrateur peut tenir le rôle de la région.
+- Un nouveau dépôt après renvoi efface les décisions précédentes de la demande (elles restent dans l'historique du circuit).
+- À l'approbation d'une création, la filière est créée **sans modules** : l'administrateur les ajoute ensuite
+  (`/filieres/{id}/modules`).

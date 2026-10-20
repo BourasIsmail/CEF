@@ -20,7 +20,15 @@ public abstract class AbstractMysqlIT {
 
     private static final MySQLContainer MYSQL;
 
+    /** Dossier de pièces jetable : les tests n'écrivent jamais dans le stockage réel. */
+    protected static final java.nio.file.Path STORAGE;
+
     static {
+        try {
+            STORAGE = java.nio.file.Files.createTempDirectory("cef-test-uploads");
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException(e);
+        }
         if (System.getenv("TEST_DB_URL") == null) {
             MYSQL = new MySQLContainer("mysql:8.4")
                     .withDatabaseName("cef_test")
@@ -35,6 +43,7 @@ public abstract class AbstractMysqlIT {
 
     @DynamicPropertySource
     static void datasource(DynamicPropertyRegistry registry) {
+        registry.add("cef.storage.dir", () -> STORAGE.toString());
         registry.add("cef.security.jwt-secret", () -> "test-only-jwt-secret-0123456789-abcdefghijklmnop");
         if (MYSQL != null) {
             registry.add("spring.datasource.url", MYSQL::getJdbcUrl);

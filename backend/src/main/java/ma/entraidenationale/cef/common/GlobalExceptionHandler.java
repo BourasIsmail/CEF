@@ -14,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 /** Réponses d'erreur uniformes (RFC 9457 « problem details »), avec un {@code code} stable. */
 @RestControllerAdvice
@@ -39,6 +40,11 @@ class GlobalExceptionHandler {
     @ExceptionHandler(BusinessRuleException.class)
     ProblemDetail businessRule(BusinessRuleException ex) {
         return problem(HttpStatus.UNPROCESSABLE_ENTITY, ex.getCode(), ex.getMessage());
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    ProblemDetail tooLarge(MaxUploadSizeExceededException ex) {
+        return problem(HttpStatus.CONTENT_TOO_LARGE, "document.too_large", "Le fichier dépasse la taille maximale autorisée (20 Mo)");
     }
 
     @ExceptionHandler(UnauthorizedException.class)
