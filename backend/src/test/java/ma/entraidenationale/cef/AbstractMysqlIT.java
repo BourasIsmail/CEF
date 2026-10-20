@@ -16,7 +16,7 @@ import org.testcontainers.mysql.MySQLContainer;
  */
 @SpringBootTest
 @ActiveProfiles("dev") // charge aussi le jeu de données fictif db/seed-dev
-abstract class AbstractMysqlIT {
+public abstract class AbstractMysqlIT {
 
     private static final MySQLContainer MYSQL;
 

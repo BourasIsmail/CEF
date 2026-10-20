@@ -5,7 +5,7 @@ gestion des centres et des ressources humaines, statistiques officielles.
 
 | Dossier | Contenu | État |
 |---|---|---|
-| `backend/` | Java 21, Spring Boot 4.1, Flyway, MySQL 8 | schéma + migrations + jeu de test ✔ — modules métier à venir |
+| `backend/` | Java 21, Spring Boot 4.1, Flyway, MySQL 8 | schéma ✔ · organisation, centres, filières, modules, saisons ✔ · bénéficiaires, statistiques, RH, sécurité JWT à venir |
 | `frontend/` | Next.js (App Router), arabe RTL / français | à venir (Dockerfile prêt) |
 | `docs/` | maquettes PDF, modèle de données, règles statistiques | ✔ |
 
@@ -42,13 +42,15 @@ TEST_DB_URL='jdbc:mysql://localhost:3306/cef_it?connectionTimeZone=UTC&allowPubl
 TEST_DB_USERNAME=cef TEST_DB_PASSWORD=... ./mvnw test
 ```
 
-`SchemaAndSeedIT` vérifie : migrations V1→V7 + seed, données de référence, UTF-8 arabe, règle de catégorie
-statistique, cycle de vie, et les garde-fous de la base (CHECK / FK / unicité).
+`SchemaAndSeedIT` vérifie les migrations, le seed et les garde-fous de la base ; `OrganizationApiIT` et
+`TrainingApiIT` testent l'API (périmètre par profil, droits, règles métier, CSRF). Chaque test d'API est annulé
+à la fin : le jeu de données reste intact.
 
 ## Documentation
 
 - [Modèle de données](docs/data-model.md)
 - [Règles du rapport statistique](docs/statistics-rules.md)
+- [API organisation / filières / modules](docs/api.md)
 - [Maquettes (PDF)](docs/CEF-Manager-maquettes.pdf)
 
 ## Sécurité
