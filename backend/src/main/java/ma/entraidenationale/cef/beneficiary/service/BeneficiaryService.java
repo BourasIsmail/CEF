@@ -45,6 +45,21 @@ public class BeneficiaryService {
     private final CenterService centers;
     private final EnrollmentService enrollments;
     private final AuditService audit;
+    private final BeneficiaryExcelExporter excel;
+
+    /** Export Excel de la liste filtrée (tri conservé, plafonné à 20 000 lignes). */
+    @Transactional(readOnly = true)
+    public byte[] exportXlsx(Filter filter, org.springframework.data.domain.Sort sort, boolean arabic) {
+        List<Summary> all = new java.util.ArrayList<>();
+        for (int page = 0; page < 40; page++) {
+            PageResponse<Summary> p = query.search(filter, org.springframework.data.domain.PageRequest.of(page, 500, sort));
+            all.addAll(p.content());
+            if (page + 1 >= p.totalPages()) {
+                break;
+            }
+        }
+        return excel.export(all, arabic);
+    }
 
     // ------------------------------------------------------------------ lecture
 

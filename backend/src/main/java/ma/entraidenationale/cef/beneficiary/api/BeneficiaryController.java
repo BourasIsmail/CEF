@@ -57,6 +57,32 @@ class BeneficiaryController {
                 category, gender, vulnerable, withoutEnrollment), pageable);
     }
 
+    @GetMapping("/export.xlsx")
+    org.springframework.http.ResponseEntity<byte[]> export(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long regionId,
+            @RequestParam(required = false) Long provinceId,
+            @RequestParam(required = false) Long centerId,
+            @RequestParam(required = false) Long filiereId,
+            @RequestParam(required = false) Long seasonId,
+            @RequestParam(required = false) EnrollmentStatus status,
+            @RequestParam(required = false) StatCategory category,
+            @RequestParam(required = false) Gender gender,
+            @RequestParam(required = false) Boolean vulnerable,
+            @RequestParam(required = false) Boolean withoutEnrollment,
+            @RequestParam(defaultValue = "ar") String lang,
+            @PageableDefault(size = 20) Pageable pageable) {
+        byte[] body = beneficiaries.exportXlsx(new Filter(search, regionId, provinceId, centerId, filiereId, seasonId,
+                status, category, gender, vulnerable, withoutEnrollment), pageable.getSort(), !"fr".equals(lang));
+        return org.springframework.http.ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION,
+                        org.springframework.http.ContentDisposition.attachment().filename("beneficiaires.xlsx").build().toString())
+                .header(org.springframework.http.HttpHeaders.CACHE_CONTROL, "no-store")
+                .body(body);
+    }
+
     @GetMapping("/{id}")
     Detail get(@PathVariable Long id) {
         return beneficiaries.get(id);

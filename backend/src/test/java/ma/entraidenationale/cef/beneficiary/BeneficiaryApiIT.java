@@ -51,6 +51,23 @@ class BeneficiaryApiIT extends AbstractApiIT {
     }
 
     @Test
+    void exportXlsxHonorsScopeAndFilters() throws Exception {
+        byte[] all = mvc.perform(get("/api/beneficiaries/export.xlsx").with(admin())).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+        byte[] scoped = mvc.perform(get("/api/beneficiaries/export.xlsx").with(provincial("0602")))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
+        assertThat(rows(all)).isEqualTo(20);
+        assertThat(rows(scoped)).isEqualTo(5);
+        mvc.perform(get("/api/beneficiaries/export.xlsx")).andExpect(status().isUnauthorized());
+    }
+
+    private static int rows(byte[] xlsx) throws Exception {
+        try (var wb = new org.apache.poi.xssf.usermodel.XSSFWorkbook(new java.io.ByteArrayInputStream(xlsx))) {
+            return wb.getSheetAt(0).getLastRowNum();
+        }
+    }
+
+    @Test
     void scopeCannotBeWidenedWithFilters() throws Exception {
         mvc.perform(get("/api/beneficiaries").param("centerId", String.valueOf(centerId("RAB-01"))).with(provincial("0601")))
                 .andExpect(jsonPath("$.totalElements").value(0));

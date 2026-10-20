@@ -81,6 +81,16 @@ class AuthApiIT extends AbstractApiIT {
     }
 
     @Test
+    void loginWithoutRememberMeIssuesSessionRefreshCookie() throws Exception {
+        createUser("sara.p", "PROVINCIAL", "\"provinceId\": " + provinceId("0601"));
+        MvcResult r = mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON)
+                .content("{\"username\": \"sara.p\", \"password\": \"%s\", \"rememberMe\": false}".formatted(PASSWORD)))
+                .andExpect(status().isOk()).andReturn();
+        assertThat(setCookie(r, AuthCookies.REFRESH)).doesNotContain("Max-Age").contains("HttpOnly");
+        assertThat(setCookie(r, AuthCookies.SESSION_ONLY)).contains("cef_session_only=1");
+    }
+
+    @Test
     void accessCookieAuthenticatesRealRequestsWithScope() throws Exception {
         createUser("nadia.p", "PROVINCIAL", "\"provinceId\": " + provinceId("0601"));
         createUser("sara.p", "PROVINCIAL", "\"provinceId\": " + provinceId("0602"));

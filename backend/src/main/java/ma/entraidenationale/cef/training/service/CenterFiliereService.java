@@ -79,6 +79,27 @@ public class CenterFiliereService {
         return list(centerId);
     }
 
+    /** Remplace l'ensemble des centres d'une filière (ajouts et retraits en une opération). */
+    @Transactional
+    public void replaceCenters(Long filiereId, List<Long> centerIds) {
+        Filiere filiere = requireActive(filiereId);
+        Set<Long> wanted = new HashSet<>(centerIds);
+        Set<Long> current = centerFilieres.findByIdFiliereId(filiereId).stream()
+                .map(cf -> cf.getId().getCenterId()).collect(Collectors.toSet());
+        for (Long id : wanted) {
+            if (!current.contains(id)) {
+                add(centers.requireVisible(id), filiere);
+            }
+        }
+        for (Long id : current) {
+            if (!wanted.contains(id)) {
+                centers.requireVisible(id);
+                remove(id, filiereId);
+            }
+        }
+        centerFilieres.flush();
+    }
+
     // ------------------------------------------------------------------
 
     private Filiere requireActive(Long filiereId) {

@@ -5,6 +5,7 @@ import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { KeyRound, Lock, Pencil, Plus, Power, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { RolesMatrix } from "@/components/users/roles-matrix";
 import { UserFormModal } from "@/components/users/user-form-modal";
 import { ResetPasswordModal } from "@/components/users/reset-password-modal";
 import { Button } from "@/components/ui/button";
@@ -114,6 +115,9 @@ export default function UsersPage() {
 
   return (
     <>
+      <PageHeader title={t("roles.title")} subtitle={t("roles.subtitle")} />
+      <RolesMatrix />
+
       <PageHeader
         title={t("users.title")}
         subtitle={t("users.subtitle")}

@@ -85,11 +85,11 @@ const ar = {
   "enum.RequestType.CREATE": "إحداث شعبة",
   "enum.RequestType.MODIFY": "تعديل شعبة",
   "enum.RequestStatus.DRAFT": "مسودة",
-  "enum.RequestStatus.SUBMITTED": "في انتظار المديرية الجهوية",
+  "enum.RequestStatus.SUBMITTED": "بانتظار المصادقة الجهوية",
   "enum.RequestStatus.RETURNED": "مرجعة للتصحيح",
-  "enum.RequestStatus.REGIONAL_VALIDATED": "في انتظار المصادقة الوطنية",
-  "enum.RequestStatus.APPROVED": "مقبولة",
-  "enum.RequestStatus.REJECTED": "مرفوضة",
+  "enum.RequestStatus.REGIONAL_VALIDATED": "مصادَق عليه جهويا",
+  "enum.RequestStatus.APPROVED": "موافَق عليه",
+  "enum.RequestStatus.REJECTED": "مرفوض",
 } as const;
 
 const fr: Record<keyof typeof ar, string> = {

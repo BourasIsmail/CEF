@@ -289,4 +289,25 @@ class TrainingApiIT extends AbstractApiIT {
                         .content("{\"filiereIds\": [" + filiereId("SEW") + "," + filiereId("HAIR") + "," + filiereId("PAST") + "]}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$", hasSize(3)));
     }
+
+    @Test
+    void adminReplacesTheCentersOfAFiliereInOneCall() throws Exception {
+        String created = mvc.perform(post("/api/filieres").contentType(APPLICATION_JSON).content(NEW_FILIERE).with(admin()))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        long id = Long.parseLong(created.replaceAll(".*?\"id\":(\\d+).*", "$1"));
+        long cas01 = centerId("CAS-01");
+        long cas02 = centerId("CAS-02");
+        String two = "{\"centerIds\": [%d, %d]}".formatted(cas01, cas02);
+
+        mvc.perform(put("/api/filieres/" + id + "/centers").contentType(APPLICATION_JSON).content(two).with(provincial("0601")))
+                .andExpect(status().isForbidden());
+        mvc.perform(put("/api/filieres/" + id + "/centers").contentType(APPLICATION_JSON).content(two).with(admin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.centers[*].code", containsInAnyOrder("CAS-01", "CAS-02")));
+        mvc.perform(put("/api/filieres/" + id + "/centers").contentType(APPLICATION_JSON)
+                        .content("{\"centerIds\": [%d]}".formatted(cas02)).with(admin()))
+                .andExpect(jsonPath("$.centers[*].code", contains("CAS-02")));
+        mvc.perform(put("/api/filieres/" + id + "/centers").contentType(APPLICATION_JSON).content("{\"centerIds\": []}").with(admin()))
+                .andExpect(jsonPath("$.centers", hasSize(0)));
+    }
 }

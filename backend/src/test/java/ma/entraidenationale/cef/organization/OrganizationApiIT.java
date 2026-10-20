@@ -1,5 +1,7 @@
 package ma.entraidenationale.cef.organization;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
@@ -391,5 +393,25 @@ class OrganizationApiIT extends AbstractApiIT {
         String commune = "{\"provinceId\": %d, \"nameAr\": \"سيدي مومن\", \"nameFr\": \"Sidi Moumen\"}".formatted(provinceId("0601"));
         mvc.perform(post("/api/communes").contentType(APPLICATION_JSON).content(commune).with(admin()))
                 .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("commune.exists"));
+    }
+
+    @Test
+    void centersExportToExcelHonoursFiltersAndScope() throws Exception {
+        byte[] all = mvc.perform(get("/api/centers/export.xlsx").with(admin()))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", containsString("centres-cef.xlsx")))
+                .andReturn().getResponse().getContentAsByteArray();
+        byte[] scoped = mvc.perform(get("/api/centers/export.xlsx").param("lang", "fr").with(provincial("0601")))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
+        try (var a = new org.apache.poi.xssf.usermodel.XSSFWorkbook(new java.io.ByteArrayInputStream(all));
+             var b = new org.apache.poi.xssf.usermodel.XSSFWorkbook(new java.io.ByteArrayInputStream(scoped))) {
+            org.junit.jupiter.api.Assertions.assertTrue(a.getSheetAt(0).isRightToLeft());
+            org.junit.jupiter.api.Assertions.assertEquals("اسم المركز", a.getSheetAt(0).getRow(0).getCell(0).getStringCellValue());
+            org.junit.jupiter.api.Assertions.assertEquals("Centre", b.getSheetAt(0).getRow(0).getCell(0).getStringCellValue());
+            org.junit.jupiter.api.Assertions.assertTrue(a.getSheetAt(0).getLastRowNum() > b.getSheetAt(0).getLastRowNum());
+            org.junit.jupiter.api.Assertions.assertTrue(b.getSheetAt(0).getLastRowNum() >= 1);
+        }
+        mvc.perform(get("/api/centers/export.xlsx").with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.anonymous()))
+                .andExpect(status().isUnauthorized());
     }
 }

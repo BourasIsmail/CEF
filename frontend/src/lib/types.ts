@@ -234,7 +234,7 @@ export type RequestStatus = "DRAFT" | "SUBMITTED" | "RETURNED" | "REGIONAL_VALID
 
 export interface RequestSummary {
   id: number; requestNumber: string; requestType: RequestType; status: RequestStatus; centerId: number; centerNameAr: string;
-  provinceId: number; provinceNameAr: string; regionId: number; proposedNameAr: string; targetFiliereId?: number;
+  provinceId: number; provinceNameAr: string; regionId: number; proposedNameAr: string; targetFiliereId?: number; documentsCount: number;
   submittedAt?: string; createdAt: string; updatedAt: string;
 }
 export interface RequestDocument { id: number; originalFilename: string; sizeBytes: number; sha256: string; uploadedAt: string; uploadedBy: string }

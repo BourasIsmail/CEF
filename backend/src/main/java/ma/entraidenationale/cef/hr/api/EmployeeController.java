@@ -37,7 +37,11 @@ import ma.entraidenationale.cef.hr.api.EmployeeDtos.TransferRequest;
 import ma.entraidenationale.cef.hr.domain.ActivityStatus;
 import ma.entraidenationale.cef.hr.domain.AdministrativeStatus;
 import ma.entraidenationale.cef.hr.domain.EmployeeType;
+import ma.entraidenationale.cef.hr.service.EmployeeExcelExporter;
 import ma.entraidenationale.cef.hr.service.EmployeeService;
+import ma.entraidenationale.cef.common.XlsxWriter;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.ResponseEntity;
 
 /** Ressources humaines : lecture dans le périmètre de l'utilisateur, écriture ADMIN et PROVINCIAL (sa province). */
 @RestController
@@ -49,6 +53,7 @@ class EmployeeController {
     private static final String WRITERS = "hasAnyRole('ADMIN','PROVINCIAL')";
 
     private final EmployeeService employees;
+    private final EmployeeExcelExporter excel;
 
     @GetMapping
     PageResponse<Summary> list(
@@ -65,6 +70,25 @@ class EmployeeController {
             @PageableDefault(size = 20) Pageable pageable) {
         return employees.list(new Filter(search, regionId, provinceId, centerId, type, administrativeStatus,
                 activityStatus, gender, withoutCenter, filiereId), pageable);
+    }
+
+    /** Export Excel de la liste filtrée (tout le périmètre, sans pagination). */
+    @GetMapping("/export.xlsx")
+    ResponseEntity<byte[]> export(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long regionId,
+            @RequestParam(required = false) Long provinceId,
+            @RequestParam(required = false) Long centerId,
+            @RequestParam(required = false) EmployeeType type,
+            @RequestParam(required = false) AdministrativeStatus administrativeStatus,
+            @RequestParam(required = false) ActivityStatus activityStatus,
+            @RequestParam(required = false) Gender gender,
+            @RequestParam(required = false) Boolean withoutCenter,
+            @RequestParam(required = false) Long filiereId,
+            @RequestParam(defaultValue = "ar") String lang) {
+        var rows = employees.list(new Filter(search, regionId, provinceId, centerId, type, administrativeStatus,
+                activityStatus, gender, withoutCenter, filiereId), PageRequest.of(0, 10_000)).content();
+        return XlsxWriter.download(excel.export(rows, !"fr".equals(lang)), "ressources-humaines-cef.xlsx");
     }
 
     /** Effectifs par sexe, par صفة et par وضعية إدارية (agents en activité ou non, selon les filtres). */

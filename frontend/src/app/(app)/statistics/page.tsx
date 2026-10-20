@@ -16,8 +16,8 @@ import { useCentersOptions, useFilieresOptions, useProvinces, useRegions, useSea
 import type { Cell, Metrics, StatisticsReport } from "@/lib/types";
 
 const METRICS = [
-  ["registered", "dashboard.registered"], ["departed", "dashboard.departed"], ["graduates", "dashboard.graduates"],
-  ["failed", "dashboard.failed"], ["absent", "dashboard.absent"],
+  ["registered", "stats.metric.registered"], ["departed", "stats.metric.departed"], ["graduates", "stats.metric.graduates"],
+  ["failed", "stats.metric.failed"], ["absent", "stats.metric.absent"],
 ] as const;
 
 export default function StatisticsPage() {
@@ -29,6 +29,7 @@ export default function StatisticsPage() {
   const [provinceId, setProvinceId] = useState("");
   const [centerId, setCenterId] = useState("");
   const [filiereId, setFiliereId] = useState("");
+  const [applied, setApplied] = useState<Query>({});
   const [busy, setBusy] = useState<"xlsx" | "pdf" | null>(null);
 
   const seasons = useSeasons();
@@ -37,7 +38,7 @@ export default function StatisticsPage() {
   const centers = useCentersOptions(provinceId ? Number(provinceId) : undefined);
   const filieres = useFilieresOptions();
 
-  const query: Query = { seasonId, regionId, provinceId, centerId, filiereId };
+  const query = applied;
   const report = useQuery({ queryKey: ["statistics", query], queryFn: () => api<StatisticsReport>("/statistics/report", { query }), placeholderData: (p) => p });
 
   async function exportAs(kind: "xlsx" | "pdf") {
@@ -51,130 +52,121 @@ export default function StatisticsPage() {
     }
   }
 
-  const cells = (m: Metrics, bold = false) => (
+  const cells = (m: Metrics) => (
     <>
       {METRICS.map(([k]) => {
         const c: Cell = m[k];
         return (
           <Fragment key={k}>
-            <td className={`px-2 py-2 text-center tabular-nums ${bold ? "font-semibold" : ""}`}>{num(c.male)}</td>
-            <td className={`px-2 py-2 text-center tabular-nums ${bold ? "font-semibold" : ""}`}>{num(c.female)}</td>
-            <td className={`px-2 py-2 text-center tabular-nums font-semibold`}>{num(c.total)}</td>
+            <td className={TD}>{num(c.male)}</td>
+            <td className={TD}>{num(c.female)}</td>
+            <td className={TD}>{num(c.total)}</td>
           </Fragment>
         );
       })}
-      <td className="px-2 py-2 text-center tabular-nums font-semibold">{m.passRatePercent == null ? "—" : `${num(m.passRatePercent, 1)}%`}</td>
+      <td className={TD}>{m.passRatePercent == null ? "—" : `${num(m.passRatePercent, 1)}%`}</td>
     </>
   );
 
   const d = report.data;
+  const selectField = (label: string, value: string, onChange: (v: string) => void, options: { value: string | number; label: string }[], allLabel: string) => (
+    <label className="flex min-w-[10.5rem] flex-1 flex-col gap-1.5 text-[13px] font-medium">
+      <span>{label}</span>
+      <Select value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">{allLabel}</option>
+        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </Select>
+    </label>
+  );
   return (
     <>
       <PageHeader title={t("stats.title")} subtitle={t("stats.subtitle")}
         actions={<>
-          <Button variant="secondary" icon={<FileSpreadsheet className="size-4" />} loading={busy === "xlsx"} onClick={() => exportAs("xlsx")}>{t("stats.exportExcel")}</Button>
           <Button variant="secondary" icon={<FileText className="size-4" />} loading={busy === "pdf"} onClick={() => exportAs("pdf")}>{t("stats.exportPdf")}</Button>
+          <Button icon={<FileSpreadsheet className="size-4" />} loading={busy === "xlsx"} onClick={() => exportAs("xlsx")}>{t("stats.exportExcel")}</Button>
         </>} />
 
-      <div className="mb-4 grid gap-3 rounded-xl border border-line bg-white p-4 sm:grid-cols-2 lg:grid-cols-5">
-        <Select value={seasonId} onChange={(e) => setSeasonId(e.target.value)} aria-label={t("ben.filter.season")}>
-          <option value="">{t("ben.filter.season")} — {t("ben.enroll.currentSeason")}</option>
-          {seasons.data?.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
-        </Select>
-        {me.role === "ADMIN" && (
-          <Select value={regionId} onChange={(e) => { setRegionId(e.target.value); setProvinceId(""); setCenterId(""); }} aria-label={t("stats.filter.region")}>
-            <option value="">{t("stats.filter.region")} — {t("common.all")}</option>
-            {regions.data?.map((r) => <option key={r.id} value={r.id}>{name(r)}</option>)}
-          </Select>
-        )}
-        {(me.role === "ADMIN" || me.role === "REGIONAL") && (
-          <Select value={provinceId} onChange={(e) => { setProvinceId(e.target.value); setCenterId(""); }} aria-label={t("stats.filter.province")}>
-            <option value="">{t("stats.filter.province")} — {t("common.all")}</option>
-            {provinces.data?.map((p) => <option key={p.id} value={p.id}>{name(p)}</option>)}
-          </Select>
-        )}
-        <Select value={centerId} onChange={(e) => setCenterId(e.target.value)} aria-label={t("stats.filter.center")}>
-          <option value="">{t("stats.filter.center")} — {t("common.all")}</option>
-          {centers.data?.map((c) => <option key={c.id} value={c.id}>{name(c)}</option>)}
-        </Select>
-        <Select value={filiereId} onChange={(e) => setFiliereId(e.target.value)} aria-label={t("stats.filter.filiere")}>
-          <option value="">{t("stats.filter.filiere")} — {t("common.all")}</option>
-          {filieres.data?.map((f) => <option key={f.id} value={f.id}>{name(f)}</option>)}
-        </Select>
-      </div>
+      <form className="mb-5 flex flex-wrap items-end gap-3 rounded-xl border border-line bg-white p-5"
+        onSubmit={(e) => { e.preventDefault(); setApplied({ seasonId, regionId, provinceId, centerId, filiereId }); }}>
+        {selectField(t("ben.filter.season"), seasonId, setSeasonId, (seasons.data ?? []).map((s) => ({ value: s.id, label: s.label })), t("ben.enroll.currentSeason"))}
+        {me.role === "ADMIN" && selectField(t("stats.filter.region"), regionId, (v) => { setRegionId(v); setProvinceId(""); setCenterId(""); },
+          (regions.data ?? []).map((r) => ({ value: r.id, label: name(r) })), t("common.all"))}
+        {(me.role === "ADMIN" || me.role === "REGIONAL") && selectField(t("stats.filter.province"), provinceId, (v) => { setProvinceId(v); setCenterId(""); },
+          (provinces.data ?? []).map((p) => ({ value: p.id, label: name(p) })), t("common.all"))}
+        {selectField(t("stats.filter.center"), centerId, setCenterId, (centers.data ?? []).map((c) => ({ value: c.id, label: name(c) })), t("common.all"))}
+        {selectField(t("stats.filter.filiere"), filiereId, setFiliereId, (filieres.data ?? []).map((f) => ({ value: f.id, label: name(f) })), t("common.all"))}
+        <Button type="submit" className="min-h-11 bg-ink px-6 hover:bg-ink/90">{t("stats.apply")}</Button>
+      </form>
 
-      {report.isPending && <Spinner />}
-      {report.isError && <ErrorState error={report.error} />}
-      {d && (
-        <div className="overflow-x-auto rounded-xl border border-line bg-white">
-          <table className="w-full min-w-[1200px] border-collapse text-sm">
-            <thead className="bg-surface text-muted">
-              <tr>
-                <th rowSpan={2} className="px-3 py-2 text-start font-semibold">{t("stats.col.region")}</th>
-                <th rowSpan={2} className="px-3 py-2 text-start font-semibold">{t("stats.col.province")}</th>
-                <th rowSpan={2} className="px-3 py-2 text-start font-semibold">{t("stats.col.filiere")}</th>
-                <th rowSpan={2} className="px-3 py-2 text-start font-semibold">{t("stats.col.category")}</th>
-                {METRICS.map(([k, key]) => <th key={k} colSpan={3} className="border-s border-line px-2 py-2 text-center font-semibold">{t(key)}</th>)}
-                <th rowSpan={2} className="border-s border-line px-2 py-2 text-center font-semibold">{t("stats.col.passRate")}</th>
-              </tr>
-              <tr>
-                {METRICS.map(([k]) => (
-                  <Fragment key={k}>
-                    <th className="border-s border-line px-2 py-1 text-center text-xs font-medium">{t("stats.male")}</th>
-                    <th className="px-2 py-1 text-center text-xs font-medium">{t("stats.female")}</th>
-                    <th className="px-2 py-1 text-center text-xs font-medium">{t("stats.total")}</th>
-                  </Fragment>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {d.regions.length === 0 && <tr><td colSpan={20} className="p-8 text-center text-muted">{t("stats.empty")}</td></tr>}
-              {d.regions.map((region) => {
-                const regionRows = region.provinces.reduce((s, p) => s + p.filieres.reduce((x, f) => x + f.categories.length + 1, 0) + 1, 0) + 1;
-                return (
-                  <Fragment key={region.id}>
-                    {region.provinces.map((province, pi) => {
-                      const provinceRows = province.filieres.reduce((x, f) => x + f.categories.length + 1, 0) + 1;
-                      return (
+      <section className="space-y-3.5 rounded-xl border border-line bg-white p-5">
+        <div className="space-y-1 text-center">
+          <div className="text-[17px] font-bold">{t("stats.tableTitle")}</div>
+          {d?.season && <div className="text-sm text-muted">{t("stats.seasonLine", { season: d.season.label })}</div>}
+        </div>
+        {report.isPending && <Spinner />}
+        {report.isError && <ErrorState error={report.error} />}
+        {d && (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[960px] border-collapse text-xs">
+              <thead>
+                <tr>
+                  {(["region", "province", "filiere", "category"] as const).map((k) => <th key={k} rowSpan={2} className={TH}>{t(`stats.col.${k}`)}</th>)}
+                  {METRICS.map(([k, key]) => <th key={k} colSpan={3} className={TH}>{t(key)}</th>)}
+                  <th rowSpan={2} className={TH}>{t("stats.col.passRate")}</th>
+                </tr>
+                <tr>
+                  {METRICS.map(([k]) => (
+                    <Fragment key={k}>
+                      <th className={TH}>{t("stats.male")}</th><th className={TH}>{t("stats.female")}</th><th className={TH}>{t("stats.total")}</th>
+                    </Fragment>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {d.regions.length === 0 && <tr><td colSpan={20} className="p-8 text-center text-muted">{t("stats.empty")}</td></tr>}
+                {d.regions.map((region) => {
+                  const provRows = (p: (typeof region.provinces)[number]) => p.filieres.reduce((x, f) => x + f.categories.length, 0) + 1;
+                  const regionRows = region.provinces.reduce((x, p) => x + provRows(p), 0);
+                  return (
+                    <Fragment key={region.id}>
+                      {region.provinces.map((province, pi) => (
                         <Fragment key={province.id}>
-                          {province.filieres.map((f, fi) => (
-                            <Fragment key={f.id}>
-                              {f.categories.map((c, ci) => (
-                                <tr key={c.category + ci} className="border-t border-line">
-                                  {pi === 0 && fi === 0 && ci === 0 && <td rowSpan={regionRows} className="border-e border-line px-3 py-2 align-top font-semibold">{name(region)}</td>}
-                                  {fi === 0 && ci === 0 && <td rowSpan={provinceRows} className="border-e border-line px-3 py-2 align-top font-medium">{name(province)}</td>}
-                                  {ci === 0 && <td rowSpan={f.categories.length + 1} className="border-e border-line px-3 py-2 align-top">{name(f)}</td>}
-                                  <td className="px-3 py-2">{t(`category.${c.category}`)}{c.specification ? ` (${c.specification})` : ""}</td>
-                                  {cells(c.metrics)}
-                                </tr>
-                              ))}
-                              <tr className="border-t border-line bg-surface/60 font-semibold">
-                                <td className="px-3 py-2">{t("stats.total")}</td>{cells(f.total, true)}
-                              </tr>
-                            </Fragment>
-                          ))}
-                          <tr className="border-t border-line bg-brand-50/60 font-semibold">
-                            <td className="px-3 py-2" colSpan={2}>{t("stats.totalProvince")}</td>{cells(province.total, true)}
+                          {province.filieres.map((f, fi) => f.categories.map((c, ci) => (
+                            <tr key={`${f.id}-${c.category}${ci}`} className={c.category === "REMAINING" ? "bg-[#F7FAF9]" : "bg-white"}>
+                              {pi === 0 && fi === 0 && ci === 0 && <td rowSpan={regionRows} className={TM}>{name(region)}</td>}
+                              {fi === 0 && ci === 0 && <td rowSpan={provRows(province)} className={TM}>{name(province)}</td>}
+                              {ci === 0 && <td rowSpan={f.categories.length} className={TM}>{name(f)}</td>}
+                              <td className={TL}>{t(`category.${c.category}`)}{c.specification ? ` (${c.specification})` : ""}</td>
+                              {cells(c.metrics)}
+                            </tr>
+                          )))}
+                          <tr className="bg-[#E3F0EE] font-bold">
+                            <td className={TL} colSpan={2}>{t("stats.totalProvince")}</td>{cells(province.total)}
                           </tr>
                         </Fragment>
-                      );
-                    })}
-                    <tr className="border-t border-line bg-brand-100/60 font-bold">
-                      <td className="px-3 py-2" colSpan={3}>{t("stats.totalRegion")}</td>{cells(region.total, true)}
-                    </tr>
-                  </Fragment>
-                );
-              })}
-              {d.regions.length > 0 && (
-                <tr className="border-t-2 border-brand-600 bg-brand-100 font-bold">
-                  <td className="px-3 py-3" colSpan={4}>{t("stats.totalAll")}</td>{cells(d.grandTotal, true)}
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-      <p className="mt-4 text-xs text-muted">{t("stats.note")}</p>
+                      ))}
+                      <tr className="bg-[#CFE5E2] font-bold">
+                        <td className={TL} colSpan={4}>{t("stats.totalRegion")}</td>{cells(region.total)}
+                      </tr>
+                    </Fragment>
+                  );
+                })}
+                {d.regions.length > 1 && (
+                  <tr className="bg-[#B5D6D2] font-bold">
+                    <td className={TL} colSpan={4}>{t("stats.totalAll")}</td>{cells(d.grandTotal)}
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p className="text-xs leading-[1.8] text-muted">{t("stats.note")}</p>
+      </section>
     </>
   );
 }
+
+const TH = "border border-[#3F7E7B] bg-[#0F5C5A] px-[3px] py-[7px] text-center font-semibold text-white";
+const TD = "border border-[#CBD7D4] px-[3px] py-1.5 text-center tabular-nums";
+const TL = "border border-[#CBD7D4] px-2 py-1.5 text-start";
+const TM = "border border-[#CBD7D4] bg-[#F3F6F5] px-2 py-1.5 text-start align-middle font-semibold";

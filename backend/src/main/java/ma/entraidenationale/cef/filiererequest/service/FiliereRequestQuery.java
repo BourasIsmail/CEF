@@ -80,12 +80,13 @@ class FiliereRequestQuery {
         List<Summary> rows = jdbc.query("""
                 SELECT r.id, r.request_number, r.request_type, r.status, r.center_id, c.name_ar AS center_name,
                        p.id AS province_id, p.name_ar AS province_name, p.regional_directorate_id AS region_id,
-                       r.proposed_name_ar, r.target_filiere_id, r.submitted_at, r.created_at, r.updated_at
+                       r.proposed_name_ar, r.target_filiere_id,
+                       (SELECT COUNT(*) FROM request_document d WHERE d.request_id = r.id) AS documents_count, r.submitted_at, r.created_at, r.updated_at
                 """ + FROM + where + " ORDER BY " + orderBy(pageable.getSort()) + " LIMIT :limit OFFSET :offset", params,
                 (rs, i) -> new Summary(rs.getLong("id"), rs.getString("request_number"),
                         RequestType.valueOf(rs.getString("request_type")), RequestStatus.valueOf(rs.getString("status")),
                         rs.getLong("center_id"), rs.getString("center_name"), rs.getLong("province_id"), rs.getString("province_name"),
-                        rs.getLong("region_id"), rs.getString("proposed_name_ar"), (Long) rs.getObject("target_filiere_id"),
+                        rs.getLong("region_id"), rs.getString("proposed_name_ar"), (Long) rs.getObject("target_filiere_id"), rs.getInt("documents_count"),
                         rs.getTimestamp("submitted_at") == null ? null : rs.getTimestamp("submitted_at").toInstant(),
                         rs.getTimestamp("created_at").toInstant(), rs.getTimestamp("updated_at").toInstant()));
         int totalPages = (int) Math.ceil(total / (double) pageable.getPageSize());

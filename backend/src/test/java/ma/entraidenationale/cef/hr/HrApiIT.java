@@ -1,5 +1,7 @@
 package ma.entraidenationale.cef.hr;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.hamcrest.Matchers.containsString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
@@ -415,5 +417,21 @@ class HrApiIT extends AbstractApiIT {
                 .andExpect(jsonPath("$[*].entityType", hasItem("EMPLOYEE_ASSIGNMENT")))
                 .andExpect(jsonPath("$[*].entityType", hasItem("EMPLOYEE_TEACHING")));
         mvc.perform(get("/api/employees/" + id + "/history").with(provincial("0602"))).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void employeesExportToExcelFollowsFiltersAndScope() throws Exception {
+        byte[] all = mvc.perform(get("/api/employees/export.xlsx").with(admin()))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", containsString("ressources-humaines-cef.xlsx")))
+                .andReturn().getResponse().getContentAsByteArray();
+        byte[] teachers = mvc.perform(get("/api/employees/export.xlsx").param("type", "PEDAGOGICAL").with(provincial("0601")))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
+        try (var a = new org.apache.poi.xssf.usermodel.XSSFWorkbook(new java.io.ByteArrayInputStream(all));
+             var b = new org.apache.poi.xssf.usermodel.XSSFWorkbook(new java.io.ByteArrayInputStream(teachers))) {
+            org.junit.jupiter.api.Assertions.assertTrue(a.getSheetAt(0).isRightToLeft());
+            org.junit.jupiter.api.Assertions.assertEquals("الرقم الترتيبي", a.getSheetAt(0).getRow(0).getCell(0).getStringCellValue());
+            org.junit.jupiter.api.Assertions.assertTrue(a.getSheetAt(0).getLastRowNum() >= b.getSheetAt(0).getLastRowNum());
+        }
     }
 }

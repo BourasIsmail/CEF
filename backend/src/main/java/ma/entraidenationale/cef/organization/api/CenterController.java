@@ -27,7 +27,12 @@ import ma.entraidenationale.cef.organization.api.CenterDtos.Summary;
 import ma.entraidenationale.cef.organization.domain.AreaType;
 import ma.entraidenationale.cef.organization.domain.LandStatus;
 import ma.entraidenationale.cef.organization.domain.ManagementMode;
+import ma.entraidenationale.cef.organization.service.CenterExcelExporter;
 import ma.entraidenationale.cef.organization.service.CenterService;
+import ma.entraidenationale.cef.common.XlsxWriter;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/api/centers")
@@ -36,6 +41,7 @@ import ma.entraidenationale.cef.organization.service.CenterService;
 class CenterController {
 
     private final CenterService centers;
+    private final CenterExcelExporter excel;
 
     @GetMapping
     PageResponse<Summary> list(
@@ -51,6 +57,24 @@ class CenterController {
             @PageableDefault(size = 20, sort = "nameAr") Pageable pageable) {
         Filter filter = new Filter(search, regionId, provinceId, communeId, areaType, managementMode, landStatus, filiereId, active);
         return PageResponse.of(centers.list(filter, pageable), c -> c);
+    }
+
+    /** Export Excel de la liste filtrée (tout le périmètre, sans pagination). */
+    @GetMapping("/export.xlsx")
+    ResponseEntity<byte[]> export(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long regionId,
+            @RequestParam(required = false) Long provinceId,
+            @RequestParam(required = false) Long communeId,
+            @RequestParam(required = false) AreaType areaType,
+            @RequestParam(required = false) ManagementMode managementMode,
+            @RequestParam(required = false) LandStatus landStatus,
+            @RequestParam(required = false) Long filiereId,
+            @RequestParam(required = false) Boolean active,
+            @RequestParam(defaultValue = "ar") String lang) {
+        Filter filter = new Filter(search, regionId, provinceId, communeId, areaType, managementMode, landStatus, filiereId, active);
+        var rows = centers.list(filter, PageRequest.of(0, 10_000, Sort.by("nameAr"))).getContent();
+        return XlsxWriter.download(excel.export(rows, !"fr".equals(lang)), "centres-cef.xlsx");
     }
 
     @GetMapping("/{id}")

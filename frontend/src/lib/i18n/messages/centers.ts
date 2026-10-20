@@ -136,6 +136,15 @@ const ar = {
   "centers.ord.8": "الثامن",
   "centers.ord.9": "التاسع",
   "centers.ord.10": "العاشر",
+  "centers.export": "تصدير Excel",
+  "centers.subtitle.n": "{n} مراكز ضمن نطاقك",
+  "centers.provincePrefix": "المديرية الإقليمية: {name}",
+  "centers.filieresN": "{n} شعب",
+  "centers.filter.commune": "الجماعة",
+  "centers.mgmt.short.DIRECT_EN": "مباشر",
+  "centers.mgmt.short.ASSOCIATION_WITH_EN_DIRECTOR": "جمعية + مدير",
+  "centers.mgmt.short.ASSOCIATION_FULL": "جمعية",
+  "centers.exportFailed": "تعذر تصدير الملف",
 } as const;
 
 const fr: Record<keyof typeof ar, string> = {
@@ -275,6 +284,15 @@ const fr: Record<keyof typeof ar, string> = {
   "centers.ord.8": "8e",
   "centers.ord.9": "9e",
   "centers.ord.10": "10e",
+  "centers.export": "Exporter Excel",
+  "centers.subtitle.n": "{n} centres dans votre périmètre",
+  "centers.provincePrefix": "Direction provinciale : {name}",
+  "centers.filieresN": "{n} filières",
+  "centers.filter.commune": "Commune",
+  "centers.mgmt.short.DIRECT_EN": "Direct",
+  "centers.mgmt.short.ASSOCIATION_WITH_EN_DIRECTOR": "Association + directeur",
+  "centers.mgmt.short.ASSOCIATION_FULL": "Association",
+  "centers.exportFailed": "Export impossible",
 };
 
 export const centers = { ar, fr };

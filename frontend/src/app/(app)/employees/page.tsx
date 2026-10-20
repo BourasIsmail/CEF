@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
-import { Plus, Search } from "lucide-react";
+import { FileSpreadsheet, Plus, Search } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,8 @@ import { Badge, PageHeader } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { Checkbox, Input, Select } from "@/components/ui/form";
 import { ErrorState } from "@/components/ui/states";
-import { api, type Query } from "@/lib/api";
+import { useToast } from "@/components/ui/toast";
+import { api, download, type Query } from "@/lib/api";
 import { useMe } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { can } from "@/lib/permissions";
@@ -27,6 +28,8 @@ export default function EmployeesPage() {
   const router = useRouter();
   const params = useSearchParams();
   const { t, name, label, num, date, locale } = useI18n();
+  const toast = useToast();
+  const [exporting, setExporting] = useState(false);
   const [search, setSearch] = useState("");
   const [q, setQ] = useState("");
   const [centerId, setCenterId] = useState(params.get("centerId") ?? "");
@@ -92,12 +95,27 @@ export default function EmployeesPage() {
     },
   ], [t, label, locale, date, me, router]);
 
+  async function exportXlsx() {
+    setExporting(true);
+    try {
+      const { page: _p, size: _s, sort: _o, ...filters } = query;
+      await download("/employees/export.xlsx", { ...filters, lang: locale }, "ressources-humaines-cef.xlsx");
+    } catch {
+      toast.error(t("centers.exportFailed"));
+    } finally {
+      setExporting(false);
+    }
+  }
+
   const reset = (f: (v: string) => void) => (e: { target: { value: string } }) => { f(e.target.value); setPage(0); };
 
   return (
     <>
       <PageHeader title={t("hr.title")} subtitle={t("hr.subtitle")}
-        actions={can.write(me) && <Button icon={<Plus className="size-4" />} onClick={() => router.push("/employees/new")}>{t("hr.new")}</Button>} />
+        actions={<>
+          <Button variant="secondary" icon={<FileSpreadsheet className="size-4" />} loading={exporting} onClick={exportXlsx}>{t("centers.export")}</Button>
+          {can.write(me) && <Button icon={<Plus className="size-4" />} onClick={() => router.push("/employees/new")}>{t("hr.new")}</Button>}
+        </>} />
 
       {summary.data && (
         <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

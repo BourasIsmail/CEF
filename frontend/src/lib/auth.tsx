@@ -10,7 +10,7 @@ import type { Me } from "./types";
 interface AuthApi {
   user: Me | undefined;
   status: "loading" | "authenticated" | "anonymous";
-  login: (username: string, password: string) => Promise<Me>;
+  login: (username: string, password: string, rememberMe?: boolean) => Promise<Me>;
   logout: () => Promise<void>;
   /** Recharge le profil (après changement de langue, de mot de passe…). */
   setUser: (u: Me) => void;
@@ -45,8 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => setUnauthorizedHandler(null);
   }, [qc, router]);
 
-  const login = useCallback(async (username: string, password: string) => {
-    const user = await api<Me>("/auth/login", { method: "POST", body: { username, password } });
+  const login = useCallback(async (username: string, password: string, rememberMe = true) => {
+    const user = await api<Me>("/auth/login", { method: "POST", body: { username, password, rememberMe } });
     qc.setQueryData(["me"], user);
     return user;
   }, [qc]);

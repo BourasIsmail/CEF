@@ -16,6 +16,7 @@ public class AuthCookies {
 
     public static final String ACCESS = "cef_access";
     public static final String REFRESH = "cef_refresh";
+    public static final String SESSION_ONLY = "cef_session_only";
     private static final String REFRESH_PATH = "/api/auth";
 
     private final CefProperties.Security props;
@@ -30,6 +31,20 @@ public class AuthCookies {
 
     ResponseCookie refresh(String token) {
         return build(REFRESH, token, REFRESH_PATH, props.refreshTokenTtl());
+    }
+
+    /** Session « non mémorisée » : le cookie disparaît à la fermeture du navigateur. */
+    ResponseCookie refreshSession(String token) {
+        return ResponseCookie.from(REFRESH, token).httpOnly(true).secure(props.cookieSecure())
+                .sameSite(props.cookieSameSite()).path(REFRESH_PATH).build();
+    }
+
+    /** Marqueur d'une session non mémorisée, relu au rafraîchissement ; vide = session mémorisée. */
+    ResponseCookie sessionOnlyMarker(boolean sessionOnly) {
+        return sessionOnly
+                ? ResponseCookie.from(SESSION_ONLY, "1").httpOnly(true).secure(props.cookieSecure())
+                        .sameSite(props.cookieSameSite()).path(REFRESH_PATH).build()
+                : build(SESSION_ONLY, "", REFRESH_PATH, Duration.ZERO);
     }
 
     ResponseCookie clearAccess() {

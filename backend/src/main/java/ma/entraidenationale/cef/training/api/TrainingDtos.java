@@ -85,6 +85,10 @@ public final class TrainingDtos {
                                     boolean active, Instant assignedAt) {
     }
 
+    /** Ensemble des centres auxquels une filière est assignée (remplace l'existant). */
+    public record FiliereCentersRequest(@NotNull List<Long> centerIds) {
+    }
+
     public record CenterFilieresRequest(@NotNull List<Long> filiereIds) {
     }
 }

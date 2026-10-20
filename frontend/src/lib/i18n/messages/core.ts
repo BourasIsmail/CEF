@@ -18,7 +18,7 @@ const ar = {
   "nav.filieres": "الشعب والوحدات",
   "nav.requests": "طلبات الشعب",
   "nav.statistics": "الإحصائيات",
-  "nav.users": "إدارة الحسابات",
+  "nav.users": "الأدوار والمستخدمون",
   "nav.account": "حسابي",
   "nav.logout": "تسجيل الخروج",
 
@@ -64,18 +64,19 @@ const ar = {
 
   // --- connexion
   "login.title": "تسجيل الدخول",
-  "login.intro": "أدخل بيانات حسابك للولوج إلى نظام تدبير المستفيدين والموارد البشرية.",
+  "login.intro": "أدخل بيانات حسابك للولوج إلى نظام تدبير المستفيدين والموارد البشرية والإحصائيات.",
+  "login.remember": "البقاء متصلا على هذا الجهاز",
   "login.username": "اسم المستخدم",
   "login.password": "كلمة المرور",
   "login.submit": "دخول",
-  "login.forgot": "كلمة المرور منسية؟ اتصل بمسؤول النظام.",
+  "login.forgot": "كلمة المرور منسية؟ اتصل بمسؤول النظام",
   "login.headline": "من التسجيل إلى الدبلوم، تتبع واحد لكل مستفيد",
-  "login.point1.title": "تسجيل وتكوين",
-  "login.point1.text": "ملف المستفيد، الشعبة، المعاينة، النتائج وتسليم الدبلوم.",
+  "login.point1.title": "التسجيل والتكوين",
+  "login.point1.text": "تسجيل وتكوين ملف المستفيد، الشعبة، المغادرة، النتائج وتسلم الدبلوم.",
   "login.point2.title": "الموارد البشرية",
-  "login.point2.text": "الأطر المشتغلة بالمراكز وتعييناتهم ومساهمتهم في التكوين.",
+  "login.point2.text": "الأطر المشرفة على النشاط وتاريخ تعييناتهم.",
   "login.point3.title": "إحصائيات رسمية",
-  "login.point3.text": "جدول الجهة والإقليم والشعبة والفئة، مع تصدير Excel وPDF.",
+  "login.point3.text": "جدول الجهة والإقليم والشعبة والفئة، مع تصدير Excel.",
   "login.footer": "المديرية الجهوية ← المديرية الإقليمية ← المركز: كل مستخدم يرى بيانات نطاقه فقط.",
 
   // --- tableau de bord (provisoire, complété à l'étape suivante)
@@ -195,7 +196,7 @@ const fr: Record<keyof typeof ar, string> = {
   "nav.filieres": "Filières et modules",
   "nav.requests": "Demandes de filière",
   "nav.statistics": "Statistiques",
-  "nav.users": "Gestion des comptes",
+  "nav.users": "Rôles et utilisateurs",
   "nav.account": "Mon compte",
   "nav.logout": "Se déconnecter",
 
@@ -238,7 +239,8 @@ const fr: Record<keyof typeof ar, string> = {
   "common.hide": "Masquer",
 
   "login.title": "Connexion",
-  "login.intro": "Saisissez vos identifiants pour accéder au système de gestion des bénéficiaires et des ressources humaines.",
+  "login.intro": "Saisissez vos identifiants pour accéder au système de gestion des bénéficiaires, des ressources humaines et des statistiques.",
+  "login.remember": "Rester connecté sur cet appareil",
   "login.username": "Identifiant",
   "login.password": "Mot de passe",
   "login.submit": "Se connecter",

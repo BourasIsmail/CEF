@@ -28,6 +28,8 @@ import ma.entraidenationale.cef.training.api.TrainingDtos.FiliereSummary;
 import ma.entraidenationale.cef.training.api.TrainingDtos.ModuleRequest;
 import ma.entraidenationale.cef.training.api.TrainingDtos.ModuleView;
 import ma.entraidenationale.cef.training.api.TrainingDtos.ReorderRequest;
+import ma.entraidenationale.cef.training.api.TrainingDtos.FiliereCentersRequest;
+import ma.entraidenationale.cef.training.service.CenterFiliereService;
 import ma.entraidenationale.cef.training.service.FiliereService;
 import ma.entraidenationale.cef.training.service.ModuleService;
 
@@ -39,6 +41,7 @@ class FiliereController {
 
     private final FiliereService filieres;
     private final ModuleService modules;
+    private final CenterFiliereService centerFilieres;
 
     @GetMapping
     PageResponse<FiliereSummary> list(@RequestParam(required = false) String q,
@@ -77,6 +80,14 @@ class FiliereController {
     @PreAuthorize("hasRole('ADMIN')")
     void delete(@PathVariable Long id) {
         filieres.delete(id);
+    }
+
+    /** Remplace l'ensemble des centres auxquels la filière est assignée. */
+    @PutMapping("/{id}/centers")
+    @PreAuthorize("hasRole('ADMIN')")
+    FiliereDetail assignCenters(@PathVariable Long id, @Valid @RequestBody FiliereCentersRequest req) {
+        centerFilieres.replaceCenters(id, req.centerIds());
+        return filieres.get(id);
     }
 
     // ------------------------------------------------------------------ modules

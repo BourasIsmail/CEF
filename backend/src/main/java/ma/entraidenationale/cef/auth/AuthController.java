@@ -32,7 +32,7 @@ import ma.entraidenationale.cef.user.service.UserService;
 @Tag(name = "Authentification")
 class AuthController {
 
-    record LoginRequest(@NotBlank String username, @NotBlank String password) {
+    record LoginRequest(@NotBlank String username, @NotBlank String password, Boolean rememberMe) {
     }
 
     record ChangePasswordRequest(@NotBlank String currentPassword, @NotBlank String newPassword) {
@@ -52,14 +52,16 @@ class AuthController {
     @PostMapping("/login")
     ResponseEntity<View> login(@Valid @RequestBody LoginRequest req, HttpServletRequest http,
                                @RequestHeader(value = HttpHeaders.USER_AGENT, required = false) String userAgent) {
-        return respond(auth.login(req.username(), req.password(), http.getRemoteAddr(), userAgent));
+        return respond(auth.login(req.username(), req.password(), http.getRemoteAddr(), userAgent),
+                Boolean.FALSE.equals(req.rememberMe()));
     }
 
     @PostMapping("/refresh")
     ResponseEntity<View> refresh(@CookieValue(name = AuthCookies.REFRESH, required = false) String refreshToken,
+                                 @CookieValue(name = AuthCookies.SESSION_ONLY, required = false) String sessionOnly,
                                  HttpServletRequest http,
                                  @RequestHeader(value = HttpHeaders.USER_AGENT, required = false) String userAgent) {
-        return respond(auth.refresh(refreshToken, http.getRemoteAddr(), userAgent));
+        return respond(auth.refresh(refreshToken, http.getRemoteAddr(), userAgent), "1".equals(sessionOnly));
     }
 
     @PostMapping("/logout")
@@ -68,6 +70,7 @@ class AuthController {
         return ResponseEntity.noContent()
                 .header(HttpHeaders.SET_COOKIE, cookies.clearAccess().toString())
                 .header(HttpHeaders.SET_COOKIE, cookies.clearRefresh().toString())
+                .header(HttpHeaders.SET_COOKIE, cookies.sessionOnlyMarker(false).toString())
                 .build();
     }
 
@@ -89,9 +92,15 @@ class AuthController {
     }
 
     private ResponseEntity<View> respond(AuthService.Session session) {
+        return respond(session, false);
+    }
+
+    private ResponseEntity<View> respond(AuthService.Session session, boolean sessionOnly) {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookies.access(session.accessToken()).toString())
-                .header(HttpHeaders.SET_COOKIE, cookies.refresh(session.refreshToken()).toString())
+                .header(HttpHeaders.SET_COOKIE, (sessionOnly ? cookies.refreshSession(session.refreshToken())
+                        : cookies.refresh(session.refreshToken())).toString())
+                .header(HttpHeaders.SET_COOKIE, cookies.sessionOnlyMarker(sessionOnly).toString())
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
                 .body(users.viewOf(session.principal().id()));
     }

@@ -55,7 +55,7 @@ public final class FiliereRequestDtos {
     public record Summary(
             Long id, String requestNumber, RequestType requestType, RequestStatus status,
             Long centerId, String centerNameAr, Long provinceId, String provinceNameAr, Long regionId,
-            String proposedNameAr, Long targetFiliereId, Instant submittedAt, Instant createdAt, Instant updatedAt) {
+            String proposedNameAr, Long targetFiliereId, int documentsCount, Instant submittedAt, Instant createdAt, Instant updatedAt) {
     }
 
     public record DocumentView(Long id, String originalFilename, long sizeBytes, String sha256, Instant uploadedAt, String uploadedBy) {

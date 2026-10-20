@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { LanguageSwitch } from "@/components/layout/language-switch";
 import { Button } from "@/components/ui/button";
-import { Field, Input } from "@/components/ui/form";
+import { Checkbox, Field, Input } from "@/components/ui/form";
 import { PasswordInput } from "@/components/ui/password-input";
 import { useAuth } from "@/lib/auth";
 import { errorKey } from "@/lib/errors";
@@ -19,6 +19,7 @@ function LoginForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>();
+  const [remember, setRemember] = useState(true);
   const [busy, setBusy] = useState(false);
 
   // uniquement des chemins internes : pas de redirection ouverte
@@ -34,7 +35,7 @@ function LoginForm() {
     setBusy(true);
     setError(undefined);
     try {
-      await login(username.trim(), password);
+      await login(username.trim(), password, remember);
       router.replace(next);
     } catch (err) {
       setError(t(errorKey(err)));
@@ -50,6 +51,7 @@ function LoginForm() {
       <Field label={t("login.password")}>
         <PasswordInput autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
       </Field>
+      <Checkbox label={t("login.remember")} checked={remember} onChange={(e) => setRemember(e.target.checked)} />
       {error && <p role="alert" className="rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger">{error}</p>}
       <Button type="submit" loading={busy} className="w-full py-2.5">{t("login.submit")}</Button>
     </form>

@@ -1,19 +1,19 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
+import { EnrollmentResults } from "@/components/beneficiaries/enrollment-results";
 import { EnrollmentSection } from "@/components/beneficiaries/enrollment-section";
-import { StatusBadge } from "@/components/beneficiaries/status-badge";
 import { AuditHistory } from "@/components/audit/history";
 import { Button } from "@/components/ui/button";
-import { Badge, Card, PageHeader } from "@/components/ui/card";
+import { Badge, Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm";
 import { ErrorState, Spinner } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
-import { api } from "@/lib/api";
+import { api, download } from "@/lib/api";
 import { useMe } from "@/lib/auth";
 import { errorText } from "@/lib/errors";
 import { useI18n } from "@/lib/i18n";
@@ -37,6 +37,7 @@ export default function BeneficiaryDetailPage() {
   const qc = useQueryClient();
   const toast = useToast();
   const { t, label, date, num, locale } = useI18n();
+  const [pdfBusy, setPdfBusy] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
@@ -59,19 +60,61 @@ export default function BeneficiaryDetailPage() {
     b.otherSocialSituation && `${t("ben.field.otherSocial")}: ${b.otherSocialSituation}`,
   ].filter(Boolean) as string[];
 
+  const statusTone = { ENROLLED: "bg-blue-50 text-blue-800", DEPARTED: "bg-warn-50 text-warn", GRADUATED: "bg-ok-50 text-ok", FAILED: "bg-danger-50 text-danger", ABSENT: "bg-surface text-muted" } as const;
+  const madeUpPass = latest?.status === "GRADUATED" && latest.sessions.some((x) => x.type === "MAKEUP" && x.result === "PASSED");
+  const statusText = latest ? (madeUpPass ? t("ben.chip.afterMakeup", { status: label("EnrollmentStatus", latest.status) }) : label("EnrollmentStatus", latest.status)) : t("ben.noEnrollment");
+  const tiles: [string, string][] = [
+    [t("ben.field.rank"), num(b.rankNumber)],
+    [t("ben.col.age"), t("ben.ageYears", { n: num(b.age) })],
+    [t("ben.tile.category"), t(`category.${b.category}`)],
+    [t("ben.field.family"), b.familyStatus ? `${label("FamilyStatus", b.familyStatus)}${b.familyStatusOtherText ? `: ${b.familyStatusOtherText}` : ""}` : "—"],
+  ];
+
+  async function pdf() {
+    if (!latest) return;
+    setPdfBusy(true);
+    try {
+      await download(`/enrollments/${latest.id}/bulletin.pdf`, { lang: locale }, `bulletin-${b.registrationNumber}.pdf`);
+    } catch (e) {
+      toast.error(errorText(e, t));
+    } finally {
+      setPdfBusy(false);
+    }
+  }
+
   return (
     <>
-      <Link href="/beneficiaries" className="mb-2 inline-block text-sm text-brand-700 hover:underline">← {t("ben.title")}</Link>
-      <PageHeader
-        title={<span className="flex flex-wrap items-center gap-3">{b.fullNameAr} <StatusBadge status={latest?.status} /></span>}
-        subtitle={<>{b.fullNameFr && <span className="ltr-field inline-block">{b.fullNameFr} · </span>}<span className="ltr-field inline-block">{b.registrationNumber}</span> · {b.centerNameAr}</>}
-        actions={writer && <>
-          <Button variant="secondary" icon={<Pencil className="size-4" />} onClick={() => router.push(`/beneficiaries/${b.id}/edit`)}>{t("common.edit")}</Button>
-          <Button variant="danger" icon={<Trash2 className="size-4" />} onClick={() => setDeleting(true)}>{t("common.delete")}</Button>
-        </>}
-      />
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <Link href="/beneficiaries" className="text-sm font-semibold text-brand-700 hover:underline">› {t("ben.title")}</Link>
+          <h1 className="mt-1.5 text-3xl font-bold">{b.fullNameAr}</h1>
+          <p className="mt-1 text-sm text-muted">
+            {b.fullNameFr && <span className="ltr-field inline-block">{b.fullNameFr}</span>}
+            {b.fullNameFr && " · "}{t("ben.col.reg")} <span className="ltr-field inline-block">{b.registrationNumber}</span>
+            {" · "}{b.centerNameAr}
+            {latest && <> · {locale === "fr" ? latest.filiereNameFr : latest.filiereNameAr} · {latest.seasonLabel}</>}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2.5">
+          {latest && <Button variant="secondary" loading={pdfBusy} onClick={pdf}>{t("ben.detail.pdf")}</Button>}
+          {writer && <Button variant="secondary" onClick={() => router.push(`/beneficiaries/${b.id}/edit`)}>{t("ben.detail.editFile")}</Button>}
+          <span className={`rounded-full px-4 py-2 text-sm font-semibold ${latest ? statusTone[latest.status] : "bg-surface text-muted"}`}>{statusText}</span>
+        </div>
+      </div>
 
-      <div className="space-y-6">
+      <div className="space-y-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {tiles.map(([k, v]) => (
+            <div key={k} className="rounded-xl border border-line bg-white px-5 py-4">
+              <div className="text-sm text-muted">{k}</div>
+              <div className="mt-1 text-lg font-semibold">{v}</div>
+            </div>
+          ))}
+        </div>
+
+        {latest && <EnrollmentResults enrollment={latest} writer={writer} />}
+
+        <h2 className="pt-4 text-xl font-bold">{t("ben.detail.file")}</h2>
         <div className="grid gap-6 lg:grid-cols-2">
           <Card title={t("ben.section.personal")}>
             <dl>
@@ -97,6 +140,8 @@ export default function BeneficiaryDetailPage() {
         </div>
 
         <EnrollmentSection beneficiary={b} writer={writer} />
+
+        {writer && <div><Button variant="danger" icon={<Trash2 className="size-4" />} onClick={() => setDeleting(true)}>{t("common.delete")}</Button></div>}
 
         {showHistory
           ? <AuditHistory path={`/beneficiaries/${b.id}/history`} title={t("ben.section.history")} />

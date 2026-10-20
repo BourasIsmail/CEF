@@ -242,7 +242,9 @@ class FiliereRequestApiIT extends AbstractApiIT {
     void listFiltersCountsAndActionableQueue() throws Exception {
         createRequest(prov0601, createBody("CAS-01", ""));
         long sent = submitted("CAS-02");
-        mvc.perform(get("/api/filiere-requests").with(boss).param("status", "SUBMITTED")).andExpect(jsonPath("$.totalElements").value(1));
+        mvc.perform(get("/api/filiere-requests").with(boss).param("status", "SUBMITTED")).andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].documentsCount").value(8));
+        mvc.perform(get("/api/filiere-requests").with(boss).param("status", "DRAFT")).andExpect(jsonPath("$.content[0].documentsCount").value(0));
         mvc.perform(get("/api/filiere-requests").with(boss).param("type", "MODIFY")).andExpect(jsonPath("$.totalElements").value(0));
         mvc.perform(get("/api/filiere-requests").with(boss).param("centerId", String.valueOf(centerId("CAS-02")))).andExpect(jsonPath("$.totalElements").value(1));
         mvc.perform(get("/api/filiere-requests").with(boss).param("search", "DF-")).andExpect(jsonPath("$.totalElements").value(2));
