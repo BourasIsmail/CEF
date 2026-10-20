@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { RequestPath, RequestStatusBadge } from "@/components/requests/request-badge";
 import { DataTable } from "@/components/ui/data-table";
-import { Field, Checkbox, Input, Select } from "@/components/ui/form";
+import { Select } from "@/components/ui/form";
 import { ErrorState } from "@/components/ui/states";
 import { api, type Query } from "@/lib/api";
 import { useMe } from "@/lib/auth";
@@ -23,23 +23,15 @@ export default function RequestsPage() {
   const me = useMe();
   const router = useRouter();
   const { t, label, date, num, name } = useI18n();
-  const [search, setSearch] = useState("");
-  const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
   const [type, setType] = useState("");
   const [centerId, setCenterId] = useState("");
-  const [actionable, setActionable] = useState(false);
   const [page, setPage] = useState(0);
   const [sorting, setSorting] = useState<SortingState>([{ id: "createdAt", desc: true }]);
 
-  useEffect(() => {
-    const id = setTimeout(() => { setQ(search.trim()); setPage(0); }, 300);
-    return () => clearTimeout(id);
-  }, [search]);
-
   const centers = useCentersOptions();
   const query: Query = {
-    search: q, status, type, centerId, actionable: actionable || undefined, page, size: PAGE_SIZE,
+    status, type, centerId, page, size: PAGE_SIZE,
     sort: sorting[0] ? `${sorting[0].id},${sorting[0].desc ? "desc" : "asc"}` : undefined,
   };
   const list = useQuery({
@@ -92,14 +84,14 @@ export default function RequestsPage() {
       </section>
 
       <section className="mb-5 flex flex-wrap gap-3 rounded-xl border border-line bg-white p-5">
-        <label className="flex min-w-[180px] flex-[1_1_180px] flex-col gap-1.5 text-[13px] font-medium">
+        <label className="flex min-w-[180px] flex-1 flex-col gap-1.5 text-[13px] font-medium">
           <span>{t("req.filter.status")}</span>
           <Select value={status} onChange={reset(setStatus)}>
             <option value="">{t("req.filter.allStatuses")}</option>
             {STATUSES.filter((s) => me.role !== "REGIONAL" || s !== "DRAFT").map((s) => <option key={s} value={s}>{label("RequestStatus", s)}</option>)}
           </Select>
         </label>
-        <label className="flex min-w-[180px] flex-[1_1_180px] flex-col gap-1.5 text-[13px] font-medium">
+        <label className="flex min-w-[180px] flex-1 flex-col gap-1.5 text-[13px] font-medium">
           <span>{t("req.filter.type")}</span>
           <Select value={type} onChange={reset(setType)}>
             <option value="">{t("req.filter.allTypes")}</option>
@@ -107,20 +99,13 @@ export default function RequestsPage() {
             <option value="MODIFY">{t("req.info.type.modify")}</option>
           </Select>
         </label>
-        <label className="flex min-w-[180px] flex-[1_1_180px] flex-col gap-1.5 text-[13px] font-medium">
+        <label className="flex min-w-[180px] flex-1 flex-col gap-1.5 text-[13px] font-medium">
           <span>{t("req.filter.center")}</span>
           <Select value={centerId} onChange={reset(setCenterId)}>
             <option value="">{t("req.filter.allCenters")}</option>
             {centers.data?.map((c) => <option key={c.id} value={c.id}>{name(c)}</option>)}
           </Select>
         </label>
-        <label className="flex min-w-[180px] flex-[2_1_240px] flex-col gap-1.5 text-[13px] font-medium">
-          <span>{t("common.search")}</span>
-          <Input placeholder={t("req.search")} value={search} onChange={(e) => setSearch(e.target.value)} />
-        </label>
-        <div className="flex items-end pb-2.5">
-          <Checkbox label={t("req.filter.actionable")} checked={actionable} onChange={(e) => { setActionable(e.target.checked); setPage(0); }} />
-        </div>
       </section>
 
       {list.isError ? <ErrorState error={list.error} /> : (
