@@ -62,13 +62,14 @@ export function ExamSessionModal({ enrollmentId, type, open, onClose }: {
   return (
     <Modal open={open} onClose={onClose} wide title={`${label("SessionType", type)}`}>
       {open && (bulletin.data
-        ? <Form bulletin={bulletin.data} enrollmentId={enrollmentId} type={type} onClose={onClose} />
+        ? <SessionForm bulletin={bulletin.data} enrollmentId={enrollmentId} type={type} onClose={onClose} />
         : <Spinner label={t("common.loading")} />)}
     </Modal>
   );
 }
 
-function Form({ bulletin, enrollmentId, type, onClose }: { bulletin: Bulletin; enrollmentId: number; type: SessionType; onClose: () => void }) {
+/** Saisie d'une session ; `inline` l'intègre à la fiche (sans annuler ni rappel de règle, déjà affichés). */
+export function SessionForm({ bulletin, enrollmentId, type, onClose, inline }: { bulletin: Bulletin; enrollmentId: number; type: SessionType; onClose: () => void; inline?: boolean }) {
   const { t, name, label, num } = useI18n();
   const toast = useToast();
   const qc = useQueryClient();
@@ -120,7 +121,7 @@ function Form({ bulletin, enrollmentId, type, onClose }: { bulletin: Bulletin; e
   return (
     <form onSubmit={handleSubmit((f) => { setFormError(undefined); save.mutate(f); })} className="space-y-4" noValidate>
       {type === "MAKEUP" && <p className="rounded-lg bg-warn-50 px-3 py-2 text-sm text-warn">{t("ben.exam.makeupHint")}</p>}
-      <p className="text-xs text-muted">{t("ben.exam.statusHint")}</p>
+      {!inline && <p className="text-xs text-muted">{t("ben.exam.statusHint")}</p>}
       <Field label={t("ben.exam.number")} className="max-w-xs"><Input className="ltr-field" {...register("examNumber")} /></Field>
 
       <div className="overflow-x-auto rounded-lg border border-line">
@@ -190,9 +191,11 @@ function Form({ bulletin, enrollmentId, type, onClose }: { bulletin: Bulletin; e
           <Input type="number" step="0.01" min={0} max={20} className="ltr-field" {...register("passThreshold", gradeRule)} />
         </Field>
       </div>
-      <div className="rounded-lg bg-brand-50 px-3 py-2 text-xs leading-6 text-brand-900">
-        <b>{t("ben.exam.rule")}</b> — {t("ben.exam.ruleText")}
-      </div>
+      {!inline && (
+        <div className="rounded-lg bg-brand-50 px-3 py-2 text-xs leading-6 text-brand-900">
+          <b>{t("ben.exam.rule")}</b> — {t("ben.exam.ruleText")}
+        </div>
+      )}
 
       <div className="space-y-3 rounded-lg border border-line p-4">
         <div><Checkbox label={t("ben.exam.exceptionalTitle")} {...register("exceptionalPass")} /><p className="mt-1 text-xs text-muted">{t("ben.exam.exceptionalHelp")}</p></div>
@@ -205,7 +208,7 @@ function Form({ bulletin, enrollmentId, type, onClose }: { bulletin: Bulletin; e
 
       {formError && <p role="alert" className="rounded-lg bg-danger-50 px-3 py-2 text-sm text-danger">{formError}</p>}
       <div className="flex justify-end gap-2">
-        <Button variant="secondary" onClick={onClose}>{t("common.cancel")}</Button>
+        {!inline && <Button variant="secondary" onClick={onClose}>{t("common.cancel")}</Button>}
         <Button type="submit" loading={save.isPending}>{t("common.save")}</Button>
       </div>
     </form>

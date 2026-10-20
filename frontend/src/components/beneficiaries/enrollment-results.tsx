@@ -1,9 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { ExamSessionModal } from "./exam-session-modal";
+import { SessionForm } from "./exam-session-modal";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/states";
@@ -18,7 +17,6 @@ const card = "rounded-xl border border-line bg-white p-6 space-y-3.5";
 /** Résultats d'examen de la dernière inscription et diplôme, tels que dans la maquette « fiche bénéficiaire ». */
 export function EnrollmentResults({ enrollment, writer }: { enrollment: EnrollmentView; writer: boolean }) {
   const { t, label, num } = useI18n();
-  const [editing, setEditing] = useState<SessionType | null>(null);
   const bulletin = useQuery({ queryKey: ["bulletin", enrollment.id], queryFn: () => api<Bulletin>(`/enrollments/${enrollment.id}/bulletin`) });
   if (bulletin.isPending) return <Spinner />;
   if (bulletin.isError) return null;
@@ -57,13 +55,11 @@ export function EnrollmentResults({ enrollment, writer }: { enrollment: Enrollme
           <section key={s.type} className={card}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-xl font-semibold">{label("SessionType", s.type)}</h2>
-              <div className="flex flex-wrap items-center gap-2">
-                {(s.type === "NORMAL" ? canEnter : canMakeup) && (
-                  <Button variant="secondary" onClick={() => setEditing(s.type)}>{t("ben.exam.editSession")}</Button>
-                )}
-                <span className={`rounded-full px-3.5 py-1.5 text-sm font-semibold ${resultTone(s)}`}>{resultText(s)}</span>
-              </div>
+              <span className={`rounded-full px-3.5 py-1.5 text-sm font-semibold ${resultTone(s)}`}>{resultText(s)}</span>
             </div>
+            {(s.type === "NORMAL" ? canEnter : canMakeup) ? (
+              <SessionForm key={JSON.stringify(s)} bulletin={b} enrollmentId={enrollment.id} type={s.type} inline onClose={() => {}} />
+            ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-surface text-muted">
@@ -110,17 +106,24 @@ export function EnrollmentResults({ enrollment, writer }: { enrollment: Enrollme
                 </tbody>
               </table>
             </div>
+            )}
           </section>
         );
       })}
+      {canMakeup && sessions.length > 0 && !sessions.some((x) => x.type === "MAKEUP") && (
+        <section className={card}>
+          <h2 className="text-xl font-semibold">{label("SessionType", "MAKEUP")}</h2>
+          <SessionForm bulletin={b} enrollmentId={enrollment.id} type="MAKEUP" inline onClose={() => {}} />
+        </section>
+      )}
       {sessions.length === 0 && (
         <section className={card}>
           <p className="text-sm text-muted">{t("ben.exam.noSession")}</p>
-          {canEnter && <div><Button onClick={() => setEditing("NORMAL")}>{t("ben.exam.enterSession")}</Button></div>}
+          {canEnter && <SessionForm bulletin={b} enrollmentId={enrollment.id} type="NORMAL" inline onClose={() => {}} />}
         </section>
       )}
 
-      <section className="space-y-3.5 rounded-xl border border-dashed border-line bg-white p-6">
+      {!canEnter && <section className="space-y-3.5 rounded-xl border border-dashed border-line bg-white p-6">
         <h2 className="text-lg font-semibold">{t("ben.exam.exceptionalTitle")}</h2>
         <label className="flex min-h-11 items-center gap-2.5 text-sm">
           <input type="checkbox" className="size-5" checked={!!exceptional} disabled readOnly />
@@ -132,11 +135,10 @@ export function EnrollmentResults({ enrollment, writer }: { enrollment: Enrollme
             className="w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-sm" />
         </div>
         {writer && <p className="text-xs text-muted">{t("ben.exam.exceptionalNote")}</p>}
-      </section>
+      </section>}
 
       <DiplomaCard key={`${enrollment.id}-${enrollment.diploma?.serialNumber ?? ""}`} enrollment={enrollment} writer={writer} />
 
-      {editing && <ExamSessionModal open enrollmentId={enrollment.id} type={editing} onClose={() => setEditing(null)} />}
     </>
   );
 }
