@@ -100,7 +100,8 @@ public final class EnrollmentDtos {
     /** بيان النقط : toutes les sessions d'une inscription, avec les modules de la filière. */
     public record Bulletin(
             Long enrollmentId, Long beneficiaryId, String beneficiaryNameAr, String beneficiaryNameFr,
-            String registrationNumber, String seasonLabel, String centerNameAr, String filiereNameAr,
+            String registrationNumber, String seasonLabel, String centerNameAr, String centerNameFr,
+            String filiereNameAr, String filiereNameFr,
             EnrollmentStatus status, LocalDate examDate,
             List<ModuleInfo> modules, List<SessionView> sessions,
             /** Le rattrapage peut être saisi : session normale échouée ou absente, inscription non clôturée. */

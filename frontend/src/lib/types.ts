@@ -176,7 +176,7 @@ export interface SessionView {
 }
 export interface Bulletin {
   enrollmentId: number; beneficiaryId: number; beneficiaryNameAr: string; beneficiaryNameFr?: string;
-  registrationNumber: string; seasonLabel: string; centerNameAr: string; filiereNameAr: string;
+  registrationNumber: string; seasonLabel: string; centerNameAr: string; centerNameFr?: string; filiereNameAr: string; filiereNameFr?: string;
   status: EnrollmentStatus; examDate?: string;
   modules: ModuleView[]; sessions: SessionView[]; makeupAllowed: boolean; diploma?: DiplomaView;
 }

@@ -1,6 +1,10 @@
 package ma.entraidenationale.cef.enrollment.api;
 
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,6 +30,7 @@ import ma.entraidenationale.cef.enrollment.api.EnrollmentDtos.EnrollmentRequest;
 import ma.entraidenationale.cef.enrollment.api.EnrollmentDtos.EnrollmentView;
 import ma.entraidenationale.cef.enrollment.api.EnrollmentDtos.SessionRequest;
 import ma.entraidenationale.cef.enrollment.domain.SessionType;
+import ma.entraidenationale.cef.enrollment.service.BulletinPdfExporter;
 import ma.entraidenationale.cef.enrollment.service.DiplomaService;
 import ma.entraidenationale.cef.enrollment.service.EnrollmentService;
 import ma.entraidenationale.cef.enrollment.service.ExamService;
@@ -41,6 +47,7 @@ class EnrollmentController {
     private final DiplomaService diplomas;
     private final BeneficiaryRepository beneficiaries;
     private final CenterService centers;
+    private final BulletinPdfExporter bulletinPdf;
 
     // ------------------------------------------------------------------ inscriptions
 
@@ -97,6 +104,18 @@ class EnrollmentController {
     @GetMapping("/enrollments/{id}/bulletin")
     Bulletin bulletin(@PathVariable Long id) {
         return exams.bulletin(id);
+    }
+
+    /** Bulletin en PDF généré par le serveur ; {@code lang=ar} (défaut) ou {@code fr}. */
+    @GetMapping("/enrollments/{id}/bulletin.pdf")
+    ResponseEntity<byte[]> bulletinPdf(@PathVariable Long id, @RequestParam(defaultValue = "ar") String lang) {
+        Bulletin b = exams.bulletin(id);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                        .filename("bulletin-" + b.registrationNumber().replaceAll("[^A-Za-z0-9._-]", "_") + ".pdf").build().toString())
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .body(bulletinPdf.export(b, lang));
     }
 
     @PutMapping("/enrollments/{id}/sessions/{type}")

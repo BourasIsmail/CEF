@@ -262,7 +262,8 @@ public class ExamService {
         DiplomaView diploma = d == null ? null : new DiplomaView(d.getId(), d.getSerialNumber(), d.getReceivedDate(), d.getAdditionalInfo());
         var b = e.getBeneficiary();
         return new Bulletin(e.getId(), b.getId(), b.getFullNameAr(), b.getFullNameFr(), b.getRegistrationNumber(),
-                e.getSeason().getLabel(), e.getCenter().getNameAr(), e.getFiliere().getNameAr(),
+                e.getSeason().getLabel(), e.getCenter().getNameAr(), e.getCenter().getNameFr(),
+                e.getFiliere().getNameAr(), e.getFiliere().getNameFr(),
                 e.getStatus(), e.getExamDate(), moduleInfos, sessions, makeupAllowed, diploma);
     }
 

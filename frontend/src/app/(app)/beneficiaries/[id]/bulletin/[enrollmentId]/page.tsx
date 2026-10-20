@@ -1,20 +1,25 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Printer } from "lucide-react";
+import { Download, Printer } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ResultBadge } from "@/components/beneficiaries/status-badge";
 import { Button } from "@/components/ui/button";
 import { ErrorState, Spinner } from "@/components/ui/states";
-import { api } from "@/lib/api";
+import { api, download } from "@/lib/api";
+import { useToast } from "@/components/ui/toast";
+import { errorText } from "@/lib/errors";
+import { useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import type { Bulletin, SessionView } from "@/lib/types";
 
 /** بيان النقط : version imprimable (le menu et les boutons sont masqués à l'impression). */
 export default function BulletinPage() {
   const { id, enrollmentId } = useParams<{ id: string; enrollmentId: string }>();
-  const { t, name, label, num, date } = useI18n();
+  const { t, name, label, num, date, locale } = useI18n();
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
   const q = useQuery({ queryKey: ["bulletin", enrollmentId], queryFn: () => api<Bulletin>(`/enrollments/${enrollmentId}/bulletin`) });
 
   if (q.isPending) return <Spinner />;
@@ -30,7 +35,20 @@ export default function BulletinPage() {
     <div className="bulletin">
       <div className="mb-4 flex items-center justify-between print:hidden">
         <Link href={`/beneficiaries/${id}`} className="text-sm text-brand-700 hover:underline">← {t("common.back")}</Link>
-        <Button icon={<Printer className="size-4" />} onClick={() => window.print()}>{t("ben.exam.print")}</Button>
+        <div className="flex gap-2">
+          <Button icon={<Download className="size-4" />} loading={busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await download(`/enrollments/${enrollmentId}/bulletin.pdf`, { lang: locale }, `bulletin-${q.data?.registrationNumber ?? enrollmentId}.pdf`);
+              } catch (e) {
+                toast.error(errorText(e, t));
+              } finally {
+                setBusy(false);
+              }
+            }}>{t("ben.exam.pdf")}</Button>
+          <Button variant="secondary" icon={<Printer className="size-4" />} onClick={() => window.print()}>{t("ben.exam.print")}</Button>
+        </div>
       </div>
 
       <article className="mx-auto max-w-4xl rounded-xl border border-line bg-white p-8 print:max-w-none print:border-0 print:p-0">

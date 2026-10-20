@@ -135,6 +135,7 @@ rattrapage fait foi si elle existe).
 | Méthode | Chemin | Description |
 |---|---|---|
 | GET | `/enrollments/{id}/bulletin` | بيان النقط : modules de la filière + sessions (notes par module, moyennes, issue, mention) |
+| GET | `/enrollments/{id}/bulletin.pdf` | bulletin en PDF généré par le serveur (A4, police arabe embarquée) ; `lang=ar` (défaut) ou `fr` ; mêmes droits de lecture que le bulletin |
 | PUT | `/enrollments/{id}/sessions/{NORMAL\|MAKEUP}` | saisie d'une session (remplace la précédente) |
 | DELETE | `/enrollments/{id}/sessions/{type}` | suppression (le rattrapage d'abord) |
 | PUT/DELETE | `/enrollments/{id}/diploma` | diplôme (diplômés uniquement), numéro de série unique |

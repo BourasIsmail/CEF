@@ -2,8 +2,6 @@ package ma.entraidenationale.cef.statistics;
 
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +19,7 @@ import org.openpdf.text.pdf.PdfWriter;
 import org.springframework.stereotype.Component;
 
 import ma.entraidenationale.cef.beneficiary.domain.StatCategory;
+import ma.entraidenationale.cef.common.PdfFonts;
 import ma.entraidenationale.cef.statistics.StatisticsDtos.CategoryRow;
 import ma.entraidenationale.cef.statistics.StatisticsDtos.FiliereBlock;
 import ma.entraidenationale.cef.statistics.StatisticsDtos.Metrics;
@@ -46,9 +45,6 @@ class StatisticsPdfExporter {
     /** 4 colonnes d'identification + 15 colonnes de chiffres + pourcentage. */
     private static final float[] WIDTHS = {13, 13, 15, 19,
             4.6f, 4.6f, 5.2f, 4.6f, 4.6f, 5.2f, 4.6f, 4.6f, 5.2f, 4.6f, 4.6f, 5.2f, 4.6f, 4.6f, 5.2f, 7};
-
-    private static volatile BaseFont regular;
-    private static volatile BaseFont bold;
 
     byte[] export(Report report, StatisticsLabels l) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -235,8 +231,8 @@ class StatisticsPdfExporter {
     // ------------------------------------------------------------------ polices
 
     private static final class Fonts {
-        final BaseFont reg = regular();
-        final BaseFont bld = bold();
+        final BaseFont reg = PdfFonts.regular();
+        final BaseFont bld = PdfFonts.bold();
         final Font title = new Font(bld, 15);
         final Font header = new Font(bld, 7.5f, Font.NORMAL, Color.WHITE);
         final Font small = new Font(reg, 7.5f);
@@ -244,39 +240,6 @@ class StatisticsPdfExporter {
 
         Font normal(float size) {
             return new Font(reg, size);
-        }
-    }
-
-    private static BaseFont regular() {
-        if (regular == null) {
-            synchronized (StatisticsPdfExporter.class) {
-                if (regular == null) {
-                    regular = load("/fonts/NotoNaskhArabic_400Regular.ttf", "NotoNaskhArabic-Regular.ttf");
-                }
-            }
-        }
-        return regular;
-    }
-
-    private static BaseFont bold() {
-        if (bold == null) {
-            synchronized (StatisticsPdfExporter.class) {
-                if (bold == null) {
-                    bold = load("/fonts/NotoNaskhArabic_700Bold.ttf", "NotoNaskhArabic-Bold.ttf");
-                }
-            }
-        }
-        return bold;
-    }
-
-    private static BaseFont load(String resource, String name) {
-        try (InputStream in = StatisticsPdfExporter.class.getResourceAsStream(resource)) {
-            if (in == null) {
-                throw new IllegalStateException("Police introuvable : " + resource);
-            }
-            return BaseFont.createFont(name, BaseFont.IDENTITY_H, BaseFont.EMBEDDED, true, in.readAllBytes(), null);
-        } catch (IOException | DocumentException e) {
-            throw new IllegalStateException("Impossible de charger la police " + resource, e);
         }
     }
 }

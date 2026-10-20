@@ -133,6 +133,36 @@ class EnrollmentApiIT extends AbstractApiIT {
         mvc.perform(get("/api/enrollments/" + e + "/bulletin").with(provincial("0602"))).andExpect(status().isNotFound());
     }
 
+    @Test
+    void bulletinPdfIsGeneratedByTheServerInBothLanguages() throws Exception {
+        long e = enrollmentOf(beneficiaryId("2025-0003")); // deux sessions + diplôme
+        var ar = mvc.perform(get("/api/enrollments/" + e + "/bulletin.pdf").with(regional("06"))).andExpect(status().isOk()).andReturn();
+        byte[] pdf = ar.getResponse().getContentAsByteArray();
+        org.assertj.core.api.Assertions.assertThat(ar.getResponse().getContentType()).isEqualTo("application/pdf");
+        org.assertj.core.api.Assertions.assertThat(ar.getResponse().getHeader("Content-Disposition")).contains("attachment").contains("bulletin-2025-0003.pdf");
+        org.assertj.core.api.Assertions.assertThat(new String(pdf, 0, 5, java.nio.charset.StandardCharsets.US_ASCII)).isEqualTo("%PDF-");
+        org.assertj.core.api.Assertions.assertThat(pdf.length).isGreaterThan(10_000); // police arabe embarquée
+        byte[] fr = mvc.perform(get("/api/enrollments/" + e + "/bulletin.pdf").param("lang", "fr").with(admin())).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+        org.assertj.core.api.Assertions.assertThat(fr).isNotEmpty();
+        // un bénéficiaire sans aucune session donne aussi un document valide
+        byte[] empty = mvc.perform(get("/api/enrollments/" + freeEnrollment() + "/bulletin.pdf").with(admin())).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+        org.assertj.core.api.Assertions.assertThat(empty).isNotEmpty();
+        java.nio.file.Path dir = java.nio.file.Path.of("target", "export-samples");
+        java.nio.file.Files.createDirectories(dir);
+        java.nio.file.Files.write(dir.resolve("bulletin-ar.pdf"), pdf);
+        java.nio.file.Files.write(dir.resolve("bulletin-fr.pdf"), fr);
+        java.nio.file.Files.write(dir.resolve("bulletin-vide.pdf"), empty);
+    }
+
+    @Test
+    void bulletinPdfRespectsScopeAndAuthentication() throws Exception {
+        long e = enrollmentOf(beneficiaryId("2025-0003"));
+        mvc.perform(get("/api/enrollments/" + e + "/bulletin.pdf").with(provincial("0602"))).andExpect(status().isNotFound());
+        mvc.perform(get("/api/enrollments/" + e + "/bulletin.pdf")).andExpect(status().isUnauthorized());
+    }
+
     // ------------------------------------------------------------------ saisie d'une session
 
     @Test
