@@ -1,0 +1,14 @@
+# Profil de développement : jeu de données fictif (db/seed-dev) + documentation OpenAPI.
+spring:
+  flyway:
+    locations: classpath:db/migration,classpath:db/seed-dev
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+logging:
+  level:
+    ma.entraidenationale.cef: DEBUG

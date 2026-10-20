@@ -1,0 +1,14 @@
+# Profil de production : pas de données de test, pas de documentation publique.
+spring:
+  flyway:
+    locations: classpath:db/migration
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+logging:
+  level:
+    root: INFO
