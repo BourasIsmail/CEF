@@ -126,6 +126,8 @@ const ar = {
   "hr.filter.province": "الإقليم",
   "hr.filter.filiere": "الشعبة",
   "hr.count": "{n} موظفا ضمن نطاقك",
+  "hr.subtitle.n": "{n} موظفا ضمن نطاقك",
+  "hr.scale": "السلم {n}",
 } as const;
 
 const fr: Record<keyof typeof ar, string> = {
@@ -255,6 +257,8 @@ const fr: Record<keyof typeof ar, string> = {
   "hr.filter.province": "Province",
   "hr.filter.filiere": "Filière",
   "hr.count": "{n} agents dans votre périmètre",
+  "hr.subtitle.n": "{n} agents dans votre périmètre",
+  "hr.scale": "échelle {n}",
 };
 
 export const hr = { ar, fr };

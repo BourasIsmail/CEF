@@ -15,7 +15,7 @@ import { api, download, type Query } from "@/lib/api";
 import { useMe } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { can } from "@/lib/permissions";
-import { useCentersOptions, useFilieresOptions } from "@/lib/queries";
+import { useCentersOptions, useFilieresOptions, useProvinces } from "@/lib/queries";
 import type { EmployeeSummary, PageResponse, StaffSummary } from "@/lib/types";
 
 const PAGE_SIZE = 20;
@@ -34,10 +34,9 @@ export default function EmployeesPage() {
   const [q, setQ] = useState("");
   const [centerId, setCenterId] = useState(params.get("centerId") ?? "");
   const [type, setType] = useState("");
-  const [status, setStatus] = useState("");
   const [activity, setActivity] = useState("");
   const [filiereId, setFiliereId] = useState("");
-  const [without, setWithout] = useState(false);
+  const [provinceId, setProvinceId] = useState("");
   const [page, setPage] = useState(0);
   const [sorting, setSorting] = useState<SortingState>([{ id: "nameAr", desc: false }]);
 
@@ -46,12 +45,13 @@ export default function EmployeesPage() {
     return () => clearTimeout(id);
   }, [search]);
 
-  const centers = useCentersOptions();
+  const provinces = useProvinces();
+  const centers = useCentersOptions(provinceId ? Number(provinceId) : undefined);
   const filieres = useFilieresOptions();
-  const summary = useQuery({ queryKey: ["employees", "summary", centerId], queryFn: () => api<StaffSummary>("/employees/summary", { query: { centerId } }) });
+  const summary = useQuery({ queryKey: ["employees", "summary", provinceId, centerId], queryFn: () => api<StaffSummary>("/employees/summary", { query: { provinceId, centerId } }) });
 
   const query: Query = {
-    search: q, centerId, filiereId, type, administrativeStatus: status, activityStatus: activity, withoutCenter: without || undefined, page, size: PAGE_SIZE,
+    search: q, provinceId, centerId, filiereId, type, activityStatus: activity, page, size: PAGE_SIZE,
     sort: sorting[0] ? `${sorting[0].id},${sorting[0].desc ? "desc" : "asc"}` : undefined,
   };
   const list = useQuery({
