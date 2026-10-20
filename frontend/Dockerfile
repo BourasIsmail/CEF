@@ -1,6 +1,5 @@
 # syntax=docker/dockerfile:1
-# Image du frontend Next.js (App Router). Le code source du frontend est ajouté à l'étape
-# « frontend » ; ce Dockerfile suppose `output: "standalone"` dans next.config.
+# Image du frontend Next.js (App Router, `output: "standalone"`).
 
 # ---- Dépendances ------------------------------------------------------------
 FROM node:22-alpine AS deps
@@ -13,9 +12,9 @@ FROM node:22-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# URL publique de l'API (incorporée au build pour le navigateur)
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+# Adresse interne du backend, vers laquelle Next.js relaie /api (lue au build : next.config.ts)
+ARG BACKEND_URL=http://backend:8080
+ENV BACKEND_URL=$BACKEND_URL \
     NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 

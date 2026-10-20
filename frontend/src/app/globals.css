@@ -1,0 +1,57 @@
+@import "tailwindcss";
+@import "@fontsource/ibm-plex-sans-arabic/400.css";
+@import "@fontsource/ibm-plex-sans-arabic/500.css";
+@import "@fontsource/ibm-plex-sans-arabic/600.css";
+@import "@fontsource/ibm-plex-sans-arabic/700.css";
+
+@theme {
+  --font-sans: "IBM Plex Sans Arabic", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-brand-50: #e3f0ee;
+  --color-brand-100: #bcd5d2;
+  --color-brand-500: #1a7a77;
+  --color-brand-600: #0f5c5a;
+  --color-brand-700: #0e4a49;
+  --color-brand-900: #0e3f3e;
+  --color-accent: #f2b84b;
+  --color-ink: #14232b;
+  --color-muted: #4f5f67;
+  --color-line: #dde4e2;
+  --color-surface: #f3f6f5;
+  --color-danger: #b3261e;
+  --color-danger-50: #fbe9e7;
+  --color-ok: #1b7f4b;
+  --color-ok-50: #e1f3e9;
+  --color-warn: #8a5a00;
+  --color-warn-50: #fdf1d6;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Les champs de saisie techniques (identifiants, e-mail, numéros) restent lisibles de gauche à droite. */
+.ltr-field {
+  direction: ltr;
+  text-align: start;
+}
+
+[dir="rtl"] .ltr-field {
+  text-align: right;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+dialog::backdrop {
+  background: rgb(20 35 43 / 0.5);
+}

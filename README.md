@@ -6,7 +6,7 @@ gestion des centres et des ressources humaines, statistiques officielles.
 | Dossier | Contenu | État |
 |---|---|---|
 | `backend/` | Java 21, Spring Boot 4.1, Flyway, MySQL 8 | schéma ✔ · organisation, filières, bénéficiaires, inscriptions, examens ✔ · statistiques (JSON, Excel, PDF) ✔ · ressources humaines ✔ · sécurité (JWT en cookies httpOnly, comptes) ✔ · demandes de filière à venir |
-| `frontend/` | Next.js (App Router), arabe RTL / français | à venir (Dockerfile prêt) |
+| `frontend/` | Next.js (App Router), arabe RTL / français | connexion, comptes, mon compte, tableau de bord ✔ · autres écrans en cours |
 | `docs/` | maquettes PDF, modèle de données, règles statistiques | ✔ |
 
 ## Démarrage (Docker)
@@ -20,7 +20,8 @@ curl localhost:8080/actuator/health  # {"status":"UP",...}
 - `SPRING_PROFILES_ACTIVE=dev` charge en plus un jeu de données fictif (20 bénéficiaires, 5 centres…) ;
   `prod` n'applique que le schéma et les données de référence.
 - Les pièces jointes (demandes de filière) sont stockées dans le volume `uploads` ; la base dans `db_data`.
-- L'interface sera lancée avec `docker compose --profile frontend up` une fois le dossier `frontend/` créé.
+- L'interface se lance avec `docker compose --profile frontend up` ; elle relaie `/api` vers le backend (réseau interne) :
+  le navigateur ne parle qu'au frontend, et `CORS_ALLOWED_ORIGINS` doit contenir son origine publique.
 
 ## Développement du backend (sans Docker)
 
@@ -45,6 +46,18 @@ TEST_DB_USERNAME=cef TEST_DB_PASSWORD=... ./mvnw test
 (`JWT_SECRET` est fourni par les tests.) `SchemaAndSeedIT` vérifie les migrations, le seed et les garde-fous de la base ; `OrganizationApiIT` et
 `TrainingApiIT` testent l'API (périmètre par profil, droits, règles métier, CSRF). Chaque test d'API est annulé
 à la fin : le jeu de données reste intact.
+
+## Développement du frontend
+
+```bash
+cd frontend
+npm install
+npm run dev          # http://localhost:3000 ; /api est relayé vers BACKEND_URL (défaut http://localhost:8080)
+npm run typecheck && npm run lint && npm test && npm run build
+```
+
+Backend lancé en profil `dev` avec `COOKIE_SECURE=false` (HTTP local) et `CORS_ALLOWED_ORIGINS=http://localhost:3000`.
+Arabe (RTL) par défaut, français en un clic ; la langue est mémorisée dans le cookie `cef_locale` et dans le compte.
 
 ## Documentation
 
@@ -71,7 +84,8 @@ Aucun secret n'est committé : tout passe par variables d'environnement (`.env.e
 - `SPRING_PROFILES_ACTIVE=dev` charge en plus un jeu de données fictif (20 bénéficiaires, 5 centres…) ;
   `prod` n'applique que le schéma et les données de référence.
 - Les pièces jointes (demandes de filière) sont stockées dans le volume `uploads` ; la base dans `db_data`.
-- L'interface sera lancée avec `docker compose --profile frontend up` une fois le dossier `frontend/` créé.
+- L'interface se lance avec `docker compose --profile frontend up` ; elle relaie `/api` vers le backend (réseau interne) :
+  le navigateur ne parle qu'au frontend, et `CORS_ALLOWED_ORIGINS` doit contenir son origine publique.
 
 ## Développement du backend (sans Docker)
 
