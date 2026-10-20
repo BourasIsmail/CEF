@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { BarChart3, Building2, FileText, GraduationCap, LayoutDashboard, LogOut, Menu, UserCog, UserRound, UsersRound, BookOpen, X } from "lucide-react";
+import { BookOpen, Building2, CalendarDays, LayoutDashboard, LogOut, Menu, UserRound, UsersRound, X, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
@@ -11,10 +11,13 @@ import { can } from "@/lib/permissions";
 import type { Me } from "@/lib/types";
 import { LanguageSwitch } from "./language-switch";
 
-interface NavItem { href: string; label: MessageKey; icon: typeof Building2; show?: (u: Me) => boolean }
+interface NavItem { href: string; label: MessageKey; icon: LucideIcon; show?: (u: Me) => boolean }
 
 const NAV: NavItem[] = [
   { href: "/", label: "nav.dashboard", icon: LayoutDashboard },
+  { href: "/centers", label: "nav.centers", icon: Building2 },
+  { href: "/filieres", label: "nav.filieres", icon: BookOpen },
+  { href: "/seasons", label: "nav.seasons", icon: CalendarDays, show: can.admin },
   { href: "/users", label: "nav.users", icon: UsersRound, show: can.manageUsers },
 ];
 

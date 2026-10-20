@@ -181,9 +181,7 @@ const ar = {
   "err.user.last_admin": "يجب أن يبقى مدير نظام نشط واحد على الأقل",
 } as const;
 
-export type MessageKey = keyof typeof ar;
-
-const fr: Record<MessageKey, string> = {
+const fr: Record<keyof typeof ar, string> = {
   "app.name": "Formation qualifiante dans les Centres d'Éducation et de Formation — Plateforme de suivi",
   "app.short": "Plateforme de suivi",
   "app.org": "Entraide Nationale",
@@ -353,4 +351,4 @@ const fr: Record<MessageKey, string> = {
   "err.user.last_admin": "Il doit rester au moins un administrateur actif",
 };
 
-export const messages: Record<"ar" | "fr", Record<MessageKey, string>> = { ar, fr };
+export const core = { ar, fr };

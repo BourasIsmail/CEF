@@ -13,6 +13,8 @@ interface I18n {
   dir: "rtl" | "ltr";
   setLocale: (l: Locale) => void;
   t: (key: MessageKey, vars?: Record<string, string | number>) => string;
+  /** Libellé d'une valeur énumérée du backend (ex. enumLabel("EnrollmentStatus", "ENROLLED")). */
+  label: (group: string, value?: string | null) => string;
   /** Nom localisé d'une entité bilingue (nameAr / nameFr) ; retombe sur l'autre langue si l'une est vide. */
   name: (o: { nameAr?: string | null; nameFr?: string | null } | null | undefined) => string;
   date: (v?: string | null) => string;
@@ -41,6 +43,7 @@ export function LocaleProvider({ initial, children }: { initial: Locale; childre
       dir: locale === "ar" ? "rtl" : "ltr",
       setLocale,
       t: (key, vars) => interpolate(messages[locale][key] ?? key, vars),
+      label: (group, value) => (value ? (messages[locale][`enum.${group}.${value}` as MessageKey] ?? value) : "—"),
       name: (o) => (o ? (locale === "ar" ? o.nameAr || o.nameFr : o.nameFr || o.nameAr) ?? "" : ""),
       date: (v) => formatDate(v, locale),
       dateTime: (v) => formatDateTime(v, locale),
