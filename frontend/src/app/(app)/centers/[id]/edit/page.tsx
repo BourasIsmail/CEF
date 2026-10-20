@@ -11,13 +11,14 @@ import type { CenterDetail } from "@/lib/types";
 
 export default function EditCenterPage() {
   const { id } = useParams<{ id: string }>();
-  const { t, name } = useI18n();
+  const { t, name, num } = useI18n();
   const q = useQuery({ queryKey: ["centers", id], queryFn: () => api<CenterDetail>(`/centers/${id}`) });
   if (q.isPending) return <Spinner />;
   if (q.isError) return <ErrorState error={q.error} />;
   return (
     <>
-      <PageHeader title={`${t("centers.edit")} : ${name(q.data)}`} />
+      <PageHeader title={`${t("centers.edit")}: ${name(q.data)}`}
+        subtitle={t("centers.header.counts", { b: num(q.data.beneficiariesCount), f: num(q.data.filieresCount), s: num(q.data.staffCount) })} />
       <CenterForm center={q.data} />
     </>
   );

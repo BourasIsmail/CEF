@@ -61,9 +61,10 @@ class EmployeeController {
             @RequestParam(required = false) ActivityStatus activityStatus,
             @RequestParam(required = false) Gender gender,
             @RequestParam(required = false) Boolean withoutCenter,
+            @RequestParam(required = false) Long filiereId,
             @PageableDefault(size = 20) Pageable pageable) {
         return employees.list(new Filter(search, regionId, provinceId, centerId, type, administrativeStatus,
-                activityStatus, gender, withoutCenter), pageable);
+                activityStatus, gender, withoutCenter, filiereId), pageable);
     }
 
     /** Effectifs par sexe, par صفة et par وضعية إدارية (agents en activité ou non, selon les filtres). */

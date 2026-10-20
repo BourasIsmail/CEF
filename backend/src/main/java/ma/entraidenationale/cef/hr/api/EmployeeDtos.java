@@ -65,14 +65,16 @@ public final class EmployeeDtos {
     public record Filter(
             String search, Long regionId, Long provinceId, Long centerId, EmployeeType type,
             AdministrativeStatus administrativeStatus, ActivityStatus activityStatus, Gender gender,
-            Boolean withoutCenter) {
+            Boolean withoutCenter, Long filiereId) {
     }
 
     public record Summary(
             Long id, Long provincialDirectorateId, Long centerId, String centerNameAr,
             EmployeeType employeeType, AdministrativeStatus administrativeStatus,
             String fullNameAr, String fullNameFr, Gender gender, String phone, String rankNumber,
-            LocalDate hireDate, ActivityStatus activityStatus) {
+            LocalDate hireDate, ActivityStatus activityStatus,
+            /** Cadre et échelle (agents de l'Entraide Nationale) ; filières enseignées pendant la saison courante. */
+            String enGrade, String enScale, String teachingFilieresAr, String teachingFilieresFr) {
     }
 
     public record Detail(
@@ -91,7 +93,9 @@ public final class EmployeeDtos {
     /** Effectifs (les compteurs « عدد … » des fiches centre / province sont calculés, jamais saisis). */
     public record StaffSummary(
             long total, long male, long female,
-            Map<EmployeeType, Long> byType, Map<AdministrativeStatus, Long> byAdministrativeStatus) {
+            Map<EmployeeType, Long> byType, Map<AdministrativeStatus, Long> byAdministrativeStatus,
+            /** Croisement صفة × وضعية إدارية (tableau « الموارد البشرية العاملة بالمركز »). */
+            Map<EmployeeType, Map<AdministrativeStatus, Long>> matrix) {
     }
 
     // ---- affectations (historique)

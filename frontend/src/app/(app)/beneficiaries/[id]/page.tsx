@@ -18,6 +18,7 @@ import { useMe } from "@/lib/auth";
 import { errorText } from "@/lib/errors";
 import { useI18n } from "@/lib/i18n";
 import { can } from "@/lib/permissions";
+import { countryName } from "@/lib/countries";
 import type { BeneficiaryDetail } from "@/lib/types";
 
 function Info({ label, children }: { label: string; children: ReactNode }) {
@@ -35,7 +36,7 @@ export default function BeneficiaryDetailPage() {
   const router = useRouter();
   const qc = useQueryClient();
   const toast = useToast();
-  const { t, label, date, num } = useI18n();
+  const { t, label, date, num, locale } = useI18n();
   const [deleting, setDeleting] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
@@ -54,7 +55,7 @@ export default function BeneficiaryDetailPage() {
   const social = [
     b.vulnerable && t("ben.field.vulnerable"),
     b.disabilityType && `${t("ben.field.disability")} (${label("DisabilityType", b.disabilityType)}${b.disabilityOtherText ? `: ${b.disabilityOtherText}` : ""})`,
-    b.migrationStatus && `${t("ben.field.migrant")} (${label("MigrationStatus", b.migrationStatus)}${b.migrationOtherText ? `: ${b.migrationOtherText}` : ""}${b.originCountry ? ` — ${b.originCountry}` : ""})`,
+    b.migrationStatus && `${t("ben.field.migrant")} (${label("MigrationStatus", b.migrationStatus)}${b.migrationOtherText ? `: ${b.migrationOtherText}` : ""}${b.originCountry ? ` — ${countryName(b.originCountry, locale)}` : ""})`,
     b.otherSocialSituation && `${t("ben.field.otherSocial")}: ${b.otherSocialSituation}`,
   ].filter(Boolean) as string[];
 

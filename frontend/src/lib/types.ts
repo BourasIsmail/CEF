@@ -197,6 +197,7 @@ export interface EmployeeSummary {
   id: number; provincialDirectorateId: number; centerId?: number; centerNameAr?: string;
   employeeType: EmployeeType; administrativeStatus: AdministrativeStatus;
   fullNameAr: string; fullNameFr?: string; gender: Gender; phone?: string; rankNumber?: string; hireDate?: string; activityStatus: ActivityStatus;
+  enGrade?: string; enScale?: string; teachingFilieresAr?: string; teachingFilieresFr?: string;
 }
 
 export interface AssignmentView {
@@ -223,6 +224,7 @@ export interface EmployeeDetail {
 export interface StaffSummary {
   total: number; male: number; female: number;
   byType: Record<EmployeeType, number>; byAdministrativeStatus: Record<AdministrativeStatus, number>;
+  matrix: Record<EmployeeType, Record<AdministrativeStatus, number>>;
 }
 
 // ---------------------------------------------------------------- demandes de filière

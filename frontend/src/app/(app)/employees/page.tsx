@@ -14,7 +14,7 @@ import { api, type Query } from "@/lib/api";
 import { useMe } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { can } from "@/lib/permissions";
-import { useCentersOptions } from "@/lib/queries";
+import { useCentersOptions, useFilieresOptions } from "@/lib/queries";
 import type { EmployeeSummary, PageResponse, StaffSummary } from "@/lib/types";
 
 const PAGE_SIZE = 20;
@@ -26,13 +26,14 @@ export default function EmployeesPage() {
   const me = useMe();
   const router = useRouter();
   const params = useSearchParams();
-  const { t, name, label, num } = useI18n();
+  const { t, name, label, num, date, locale } = useI18n();
   const [search, setSearch] = useState("");
   const [q, setQ] = useState("");
   const [centerId, setCenterId] = useState(params.get("centerId") ?? "");
   const [type, setType] = useState("");
   const [status, setStatus] = useState("");
   const [activity, setActivity] = useState("");
+  const [filiereId, setFiliereId] = useState("");
   const [without, setWithout] = useState(false);
   const [page, setPage] = useState(0);
   const [sorting, setSorting] = useState<SortingState>([{ id: "nameAr", desc: false }]);
@@ -43,10 +44,11 @@ export default function EmployeesPage() {
   }, [search]);
 
   const centers = useCentersOptions();
+  const filieres = useFilieresOptions();
   const summary = useQuery({ queryKey: ["employees", "summary", centerId], queryFn: () => api<StaffSummary>("/employees/summary", { query: { centerId } }) });
 
   const query: Query = {
-    search: q, centerId, type, administrativeStatus: status, activityStatus: activity, withoutCenter: without || undefined, page, size: PAGE_SIZE,
+    search: q, centerId, filiereId, type, administrativeStatus: status, activityStatus: activity, withoutCenter: without || undefined, page, size: PAGE_SIZE,
     sort: sorting[0] ? `${sorting[0].id},${sorting[0].desc ? "desc" : "asc"}` : undefined,
   };
   const list = useQuery({
@@ -56,6 +58,7 @@ export default function EmployeesPage() {
   });
 
   const columns = useMemo<ColumnDef<EmployeeSummary>[]>(() => [
+    { id: "rankNumber", header: t("hr.col.rank2"), cell: ({ row }) => <span className="ltr-field text-xs">{row.original.rankNumber ?? "—"}</span> },
     {
       id: "nameAr", header: t("hr.col.name"),
       cell: ({ row }) => (
@@ -65,13 +68,29 @@ export default function EmployeesPage() {
         </div>
       ),
     },
-    { id: "type", header: t("hr.col.type"), cell: ({ row }) => label("EmployeeType", row.original.employeeType) },
-    { id: "administrativeStatus", header: t("hr.col.status"), cell: ({ row }) => <Badge tone="brand">{label("AdministrativeStatus", row.original.administrativeStatus)}</Badge> },
-    { id: "center", header: t("hr.col.center"), cell: ({ row }) => row.original.centerNameAr ?? <span className="text-muted">{t("hr.provincial")}</span> },
-    { id: "rankNumber", header: t("hr.col.rank"), cell: ({ row }) => <span className="ltr-field text-xs">{row.original.rankNumber ?? "—"}</span> },
-    { id: "phone", header: t("hr.col.phone"), enableSorting: false, cell: ({ row }) => <span className="ltr-field text-xs">{row.original.phone ?? "—"}</span> },
+    {
+      id: "type", header: t("hr.col.position"),
+      cell: ({ row }) => (
+        <div>
+          <div>{row.original.enGrade ?? label("EmployeeType", row.original.employeeType)}</div>
+          <div className="text-xs text-muted">{label("AdministrativeStatus", row.original.administrativeStatus)}</div>
+        </div>
+      ),
+    },
+    { id: "center", header: t("hr.col.assignment"), cell: ({ row }) => row.original.centerNameAr ?? <span className="text-muted">{t("hr.provincial")}</span> },
+    {
+      id: "teaching", header: t("hr.col.teaching"), enableSorting: false,
+      cell: ({ row }) => (locale === "fr" ? row.original.teachingFilieresFr ?? row.original.teachingFilieresAr : row.original.teachingFilieresAr) ?? "—",
+    },
+    { id: "hireDate", header: t("hr.col.hire"), cell: ({ row }) => (row.original.hireDate ? date(row.original.hireDate) : "—") },
     { id: "activityStatus", header: t("hr.col.activity"), cell: ({ row }) => <Badge tone={row.original.activityStatus === "ACTIVE" ? "ok" : "warn"}>{label("ActivityStatus", row.original.activityStatus)}</Badge> },
-  ], [t, label]);
+    {
+      id: "edit", header: "", enableSorting: false,
+      cell: ({ row }) => can.write(me) ? (
+        <Button variant="secondary" onClick={(e) => { e.stopPropagation(); router.push(`/employees/${row.original.id}/edit`); }}>{t("common.edit")}</Button>
+      ) : null,
+    },
+  ], [t, label, locale, date, me, router]);
 
   const reset = (f: (v: string) => void) => (e: { target: { value: string } }) => { f(e.target.value); setPage(0); };
 
@@ -101,10 +120,14 @@ export default function EmployeesPage() {
           <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto size-4 text-muted" aria-hidden />
           <Input className="ps-9" placeholder={t("hr.search")} value={search} onChange={(e) => setSearch(e.target.value)} aria-label={t("common.search")} />
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <Select value={centerId} onChange={reset(setCenterId)} aria-label={t("hr.filter.center")}>
             <option value="">{t("hr.filter.center")} — {t("common.all")}</option>
             {centers.data?.map((c) => <option key={c.id} value={c.id}>{name(c)}</option>)}
+          </Select>
+          <Select value={filiereId} onChange={reset(setFiliereId)} aria-label={t("hr.filter.filiere")}>
+            <option value="">{t("hr.filter.filiere")} — {t("common.all")}</option>
+            {filieres.data?.map((f) => <option key={f.id} value={f.id}>{name(f)}</option>)}
           </Select>
           <Select value={type} onChange={reset(setType)} aria-label={t("hr.filter.type")}>
             <option value="">{t("hr.filter.type")} — {t("common.all")}</option>

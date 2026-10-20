@@ -11,7 +11,7 @@ import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/api";
 import { errorText } from "@/lib/errors";
 import { applyServerErrors } from "@/lib/form";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, type MessageKey } from "@/lib/i18n";
 import type { Bulletin, ExamStatus, SessionType } from "@/lib/types";
 
 interface Values {
@@ -24,7 +24,7 @@ interface Values {
   exceptionalPassReason: string;
 }
 
-const STATUSES: ExamStatus[] = ["TAKEN", "ABSENT"];
+const STATUSES: ExamStatus[] = ["TAKEN", "ABSENT", "NOT_TAKEN"];
 
 /** Moyenne pondérée des modules, aperçu uniquement : le serveur calcule et fait foi. */
 export function previewAverages(
@@ -45,6 +45,11 @@ export function previewAverages(
   const avg = sum / coef;
   if (finalStatus !== "TAKEN" || finalGrade === "" || Number.isNaN(Number(finalGrade))) return { modules: avg, absent };
   return { modules: avg, overall: (avg + Number(finalGrade)) / 2, absent };
+}
+
+/** Échelle des mentions du serveur (MentionScale), pour l'aperçu : 4 = très bien … 1 = passable, 0 = aucune. */
+export function mentionLevel(overall: number): 0 | 1 | 2 | 3 | 4 {
+  return overall >= 16 ? 4 : overall >= 14 ? 3 : overall >= 12 ? 2 : overall >= 10 ? 1 : 0;
 }
 
 export function ExamSessionModal({ enrollmentId, type, open, onClose }: {
@@ -115,7 +120,7 @@ function Form({ bulletin, enrollmentId, type, onClose }: { bulletin: Bulletin; e
   return (
     <form onSubmit={handleSubmit((f) => { setFormError(undefined); save.mutate(f); })} className="space-y-4" noValidate>
       {type === "MAKEUP" && <p className="rounded-lg bg-warn-50 px-3 py-2 text-sm text-warn">{t("ben.exam.makeupHint")}</p>}
-      <p className="text-xs text-muted">{t("ben.exam.absentNote")}</p>
+      <p className="text-xs text-muted">{t("ben.exam.statusHint")}</p>
       <Field label={t("ben.exam.number")} className="max-w-xs"><Input className="ltr-field" {...register("examNumber")} /></Field>
 
       <div className="overflow-x-auto rounded-lg border border-line">
@@ -126,6 +131,7 @@ function Form({ bulletin, enrollmentId, type, onClose }: { bulletin: Bulletin; e
               <th className="px-3 py-2 text-start font-semibold">{t("ben.exam.coefficient")}</th>
               <th className="px-3 py-2 text-start font-semibold">{t("ben.exam.status")}</th>
               <th className="px-3 py-2 text-start font-semibold">{t("ben.exam.grade")}</th>
+              <th className="px-3 py-2 text-start font-semibold">{t("ben.exam.product")}</th>
             </tr>
           </thead>
           <tbody>
@@ -140,8 +146,11 @@ function Form({ bulletin, enrollmentId, type, onClose }: { bulletin: Bulletin; e
                 </td>
                 <td className="px-3 py-2">
                   <Input type="number" step="0.01" min={0} max={20} className="ltr-field w-28" aria-label={`${name(m)} — ${t("ben.exam.grade")}`}
-                    disabled={v.grades?.[i]?.status === "ABSENT"} invalid={!!errors.grades?.[i]?.grade}
+                    disabled={v.grades?.[i]?.status !== "TAKEN"} invalid={!!errors.grades?.[i]?.grade}
                     {...register(`grades.${i}.grade` as const, gradeRule)} />
+                </td>
+                <td className="px-3 py-2 tabular-nums text-muted">
+                  {v.grades?.[i]?.status === "TAKEN" && v.grades?.[i]?.grade ? num(Number(v.grades[i]!.grade) * m.coefficient, 2) : "—"}
                 </td>
               </tr>
             ))}
@@ -154,8 +163,9 @@ function Form({ bulletin, enrollmentId, type, onClose }: { bulletin: Bulletin; e
               </td>
               <td className="px-3 py-2">
                 <Input type="number" step="0.01" min={0} max={20} className="ltr-field w-28" aria-label={`${t("ben.exam.final")} — ${t("ben.exam.grade")}`}
-                  disabled={v.finalExamStatus === "ABSENT"} {...register("finalExamGrade", gradeRule)} />
+                  disabled={v.finalExamStatus !== "TAKEN"} {...register("finalExamGrade", gradeRule)} />
               </td>
+              <td />
             </tr>
           </tbody>
         </table>
@@ -163,23 +173,31 @@ function Form({ bulletin, enrollmentId, type, onClose }: { bulletin: Bulletin; e
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-lg bg-surface p-3 text-sm">
-          <div className="text-muted">{t("ben.exam.modulesAverage")}</div>
+          <div className="text-muted">{t("ben.exam.weightedAverage")}</div>
           <div className="text-xl font-bold tabular-nums">{preview.modules == null ? "—" : num(preview.modules, 2)}</div>
         </div>
-        <div className="rounded-lg bg-surface p-3 text-sm">
+        <div className="rounded-lg bg-brand-50 p-3 text-sm sm:col-span-1">
           <div className="text-muted">{t("ben.exam.overall")}</div>
           <div className="text-xl font-bold tabular-nums">{preview.overall == null ? "—" : num(preview.overall, 2)}</div>
-          <div className="text-xs text-muted">{t("ben.exam.overallNote")}</div>
+          {preview.overall != null && preview.modules != null && (
+            <div className="text-xs text-muted">
+              {t("ben.exam.formula", { mod: num(preview.modules, 2), final: num(Number(v.finalExamGrade), 2), general: num(preview.overall, 2) })}
+              {mentionLevel(preview.overall) > 0 && <> · {t("ben.exam.mention")} : {t(`ben.mention.${mentionLevel(preview.overall)}` as MessageKey)}</>}
+            </div>
+          )}
         </div>
-        <Field label={t("ben.exam.threshold")} hint={t("ben.exam.thresholdHint")}>
+        <Field label={t("ben.exam.thresholdLabel")} hint={t("ben.exam.thresholdHint")}>
           <Input type="number" step="0.01" min={0} max={20} className="ltr-field" {...register("passThreshold", gradeRule)} />
         </Field>
       </div>
+      <div className="rounded-lg bg-brand-50 px-3 py-2 text-xs leading-6 text-brand-900">
+        <b>{t("ben.exam.rule")}</b> — {t("ben.exam.ruleText")}
+      </div>
 
       <div className="space-y-3 rounded-lg border border-line p-4">
-        <Checkbox label={t("ben.exam.exceptional")} {...register("exceptionalPass")} />
+        <div><Checkbox label={t("ben.exam.exceptionalTitle")} {...register("exceptionalPass")} /><p className="mt-1 text-xs text-muted">{t("ben.exam.exceptionalHelp")}</p></div>
         {v.exceptionalPass && (
-          <Field label={t("ben.exam.exceptionalReason")} required error={errors.exceptionalPassReason?.message}>
+          <Field label={t("ben.exam.reason")} required error={errors.exceptionalPassReason?.message}>
             <Textarea invalid={!!errors.exceptionalPassReason} {...register("exceptionalPassReason", { validate: (x) => !v.exceptionalPass || !!x.trim() || t("common.required") })} />
           </Field>
         )}

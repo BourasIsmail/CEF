@@ -352,13 +352,32 @@ class HrApiIT extends AbstractApiIT {
     }
 
     @Test
+    void listShowsGradeAndCurrentTeachingAndFiltersByFiliere() throws Exception {
+        mvc.perform(get("/api/employees").param("filiereId", String.valueOf(filiereId("SEW"))).with(admin()))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].fullNameFr").value("Nadia Charkaoui"))
+                .andExpect(jsonPath("$.content[0].enGrade").value("مكوّن"))
+                .andExpect(jsonPath("$.content[0].enScale").value("السلم 9"))
+                .andExpect(jsonPath("$.content[0].teachingFilieresFr").value("Couture et mode moderne"));
+        mvc.perform(get("/api/employees").param("filiereId", String.valueOf(filiereId("PAST"))).with(admin()))
+                .andExpect(jsonPath("$.totalElements").value(1)).andExpect(jsonPath("$.content[0].fullNameAr").value("حفصة الودغيري"));
+        mvc.perform(get("/api/employees").param("filiereId", String.valueOf(filiereId("HAIR"))).with(admin()))
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
     void staffSummaryIsComputedNotTyped() throws Exception {
         mvc.perform(get("/api/employees/summary").with(admin()))
                 .andExpect(jsonPath("$.total").value(5)).andExpect(jsonPath("$.male").value(2)).andExpect(jsonPath("$.female").value(3))
                 .andExpect(jsonPath("$.byType.PEDAGOGICAL").value(2)).andExpect(jsonPath("$.byType.GUEST_TRAINER").value(1))
                 .andExpect(jsonPath("$.byType.ADMINISTRATIVE").value(0))
                 .andExpect(jsonPath("$.byAdministrativeStatus.ENTRAIDE_NATIONALE").value(3))
-                .andExpect(jsonPath("$.byAdministrativeStatus.ASSOCIATION").value(2));
+                .andExpect(jsonPath("$.byAdministrativeStatus.ASSOCIATION").value(2))
+                .andExpect(jsonPath("$.matrix.PEDAGOGICAL.ENTRAIDE_NATIONALE").value(1))
+                .andExpect(jsonPath("$.matrix.PEDAGOGICAL.ASSOCIATION").value(1))
+                .andExpect(jsonPath("$.matrix.CENTER_DIRECTOR.ENTRAIDE_NATIONALE").value(1))
+                .andExpect(jsonPath("$.matrix.GUEST_TRAINER.ASSOCIATION").value(1))
+                .andExpect(jsonPath("$.matrix.ADMINISTRATIVE.OTHER_SECTOR").value(0));
         mvc.perform(get("/api/employees/summary").param("centerId", String.valueOf(centerId("CAS-01"))).with(provincial("0601")))
                 .andExpect(jsonPath("$.total").value(2));
         mvc.perform(get("/api/employees/summary").with(provincial("0602"))).andExpect(jsonPath("$.total").value(0));
