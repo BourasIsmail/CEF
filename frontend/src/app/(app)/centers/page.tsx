@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge, PageHeader } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
-import { Input, Select } from "@/components/ui/form";
+import { Field, Input, Select } from "@/components/ui/form";
 import { ErrorState } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
 import { api, download, type Query } from "@/lib/api";
@@ -121,43 +121,45 @@ export default function CentersPage() {
           {can.write(me) && <Button icon={<Plus className="size-4" />} onClick={() => router.push("/centers/new")}>{t("centers.new")}</Button>}
         </>} />
       <div className="mb-4 space-y-3 rounded-xl border border-line bg-white p-4">
+        <Field label={t("common.search")}>
         <div className="relative">
           <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto size-4 text-muted" aria-hidden />
           <Input className="ps-9" placeholder={t("centers.search")} value={search} onChange={(e) => setSearch(e.target.value)} aria-label={t("common.search")} />
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7">
+        </Field>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {showRegion && (
-            <Select value={regionId} onChange={(e) => { setRegionId(e.target.value); setProvinceId(""); setCommuneId(""); setPage(0); }} aria-label={t("centers.field.region")}>
-              <option value="">{t("centers.field.region")} — {t("common.all")}</option>
+            <Field label={t("centers.field.region")}><Select value={regionId} onChange={(e) => { setRegionId(e.target.value); setProvinceId(""); setCommuneId(""); setPage(0); }}>
+              <option value="">{t("common.all")}</option>
               {regions.data?.map((r) => <option key={r.id} value={r.id}>{name(r)}</option>)}
-            </Select>
+            </Select></Field>
           )}
           {showProvince && (
-            <Select value={provinceId} onChange={(e) => { setProvinceId(e.target.value); setCommuneId(""); setPage(0); }} aria-label={t("centers.field.province")}>
-              <option value="">{t("centers.field.province")} — {t("common.all")}</option>
+            <Field label={t("centers.field.province")}><Select value={provinceId} onChange={(e) => { setProvinceId(e.target.value); setCommuneId(""); setPage(0); }}>
+              <option value="">{t("common.all")}</option>
               {provinces.data?.map((p) => <option key={p.id} value={p.id}>{name(p)}</option>)}
-            </Select>
+            </Select></Field>
           )}
-          <Select value={communeId} onChange={reset(setCommuneId)} aria-label={t("centers.filter.commune")}>
-            <option value="">{t("centers.filter.commune")} — {t("common.all")}</option>
+          <Field label={t("centers.filter.commune")}><Select value={communeId} onChange={reset(setCommuneId)}>
+            <option value="">{t("common.all")}</option>
             {communes.data?.map((c) => <option key={c.id} value={c.id}>{name(c)}</option>)}
-          </Select>
-          <Select value={areaType} onChange={reset(setAreaType)} aria-label={t("centers.filter.area")}>
-            <option value="">{t("centers.filter.area")} — {t("common.all")}</option>
+          </Select></Field>
+          <Field label={t("centers.filter.area")}><Select value={areaType} onChange={reset(setAreaType)}>
+            <option value="">{t("common.all")}</option>
             {(["URBAN", "RURAL"] as const).map((a) => <option key={a} value={a}>{label("AreaType", a)}</option>)}
-          </Select>
-          <Select value={managementMode} onChange={reset(setManagementMode)} aria-label={t("centers.filter.management")}>
-            <option value="">{t("centers.filter.management")} — {t("common.all")}</option>
+          </Select></Field>
+          <Field label={t("centers.filter.management")}><Select value={managementMode} onChange={reset(setManagementMode)}>
+            <option value="">{t("common.all")}</option>
             {MODES.map((m) => <option key={m} value={m}>{label("ManagementMode", m)}</option>)}
-          </Select>
-          <Select value={landStatus} onChange={reset(setLandStatus)} aria-label={t("centers.filter.land")}>
-            <option value="">{t("centers.filter.land")} — {t("common.all")}</option>
+          </Select></Field>
+          <Field label={t("centers.filter.land")}><Select value={landStatus} onChange={reset(setLandStatus)}>
+            <option value="">{t("common.all")}</option>
             {LANDS.map((l) => <option key={l} value={l}>{label("LandStatus", l)}</option>)}
-          </Select>
-          <Select value={filiereId} onChange={reset(setFiliereId)} aria-label={t("centers.filter.filiere")}>
-            <option value="">{t("centers.filter.filiere")} — {t("common.all")}</option>
+          </Select></Field>
+          <Field label={t("centers.filter.filiere")}><Select value={filiereId} onChange={reset(setFiliereId)}>
+            <option value="">{t("common.all")}</option>
             {filieres.data?.map((f) => <option key={f.id} value={f.id}>{name(f)}</option>)}
-          </Select>
+          </Select></Field>
         </div>
       </div>
       {list.isError ? <ErrorState error={list.error} /> : (

@@ -2,7 +2,7 @@
 const ar = {
   "hr.title": "الموارد البشرية",
   "hr.subtitle": "الأطر والمستخدمون العاملون بالمراكز والمديرية الإقليمية",
-  "hr.new": "مستخدم جديد",
+  "hr.new": "موظف جديد",
   "hr.edit": "تعديل ملف المستخدم",
   "hr.search": "الاسم، الرقم الترتيبي، رقم وسيلة التعريف، الهاتف…",
   "hr.col.name": "الاسم الكامل",
@@ -14,7 +14,7 @@ const ar = {
   "hr.col.activity": "الحالة",
   "hr.filter.type": "الصفة",
   "hr.filter.status": "الوضعية الإدارية",
-  "hr.filter.activity": "الحالة",
+  "hr.filter.activity": "الوضعية",
   "hr.filter.center": "المركز",
   "hr.filter.withoutCenter": "المديرية الإقليمية فقط (بدون مركز)",
   "hr.provincial": "المديرية الإقليمية",

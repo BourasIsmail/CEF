@@ -195,18 +195,6 @@ export default function BeneficiariesPage() {
             </Select>
           </Field>
         </div>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-          <div className="w-40">
-            <Field label={t("ben.filter.gender")}>
-              <Select value={gender} onChange={reset(setGender)}>
-                <option value="">{t("common.all")}</option>
-                <option value="M">{label("Gender", "M")}</option>
-                <option value="F">{label("Gender", "F")}</option>
-              </Select>
-            </Field>
-          </div>
-          <Checkbox label={t("ben.filter.withoutEnrollment")} checked={without} onChange={(e) => { setWithout(e.target.checked); setPage(0); }} />
-        </div>
         {chips.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <span className="text-muted">{t("ben.chips.active")}</span>

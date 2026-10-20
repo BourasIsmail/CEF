@@ -22,12 +22,23 @@ interface Props<T> {
 }
 
 /** Tableau paginé et triable côté serveur (TanStack Table en mode manuel). */
+/** Pages affichées : la page courante et ses voisines (au plus 5), indices à partir de 0. */
+function windowPages(page: number, pages: number): number[] {
+  const start = Math.max(0, Math.min(page - 2, pages - 5));
+  return Array.from({ length: Math.min(5, pages) }, (_, i) => start + i);
+}
+
+/** Le tri est fait côté serveur : toute colonne nommée et non désactivée est triable sans accesseur de valeur. */
+function sortable<T>(columns: ColumnDef<T>[]): ColumnDef<T>[] {
+  return columns.map((c) => ("accessorFn" in c || "accessorKey" in c || !c.id || c.enableSorting === false ? c : { ...c, accessorFn: () => null } as ColumnDef<T>));
+}
+
 export function DataTable<T>({ columns, data, loading, sorting = [], onSortingChange, page, pageSize, total, onPageChange, onRowClick }: Props<T>) {
   "use no memo"; // TanStack Table renvoie des fonctions non mémoïsables
   const t = useT();
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
-    data, columns,
+    data, columns: sortable(columns),
     state: { sorting },
     manualSorting: true,
     manualPagination: true,
@@ -79,11 +90,16 @@ export function DataTable<T>({ columns, data, loading, sorting = [], onSortingCh
       {!loading && data.length === 0 && <Empty />}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-3 text-sm text-muted">
         <span>{t("common.rows", { from, to, total })}</span>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" className="px-3 py-1" disabled={page <= 0} onClick={() => onPageChange(page - 1)}>{t("common.previous")}</Button>
-          <span>{t("common.page", { page: page + 1, pages })}</span>
-          <Button variant="secondary" className="px-3 py-1" disabled={page + 1 >= pages} onClick={() => onPageChange(page + 1)}>{t("common.next")}</Button>
-        </div>
+        <nav className="flex items-center gap-2" aria-label={t("common.page", { page: page + 1, pages })}>
+          {windowPages(page, pages).map((n) => (
+            <button key={n} type="button" onClick={() => onPageChange(n)} aria-current={n === page ? "page" : undefined}
+              className={`h-9 min-w-9 rounded-lg border px-3 text-sm ${n === page ? "border-brand-700 bg-brand-700 text-white" : "border-line bg-white text-ink hover:bg-brand-50"}`}>
+              {n + 1}
+            </button>
+          ))}
+          <button type="button" disabled={page + 1 >= pages} onClick={() => onPageChange(page + 1)}
+            className="h-9 rounded-lg border border-line bg-white px-3 text-sm text-ink hover:bg-brand-50 disabled:opacity-50">{t("common.next")} ›</button>
+        </nav>
       </div>
     </div>
   );

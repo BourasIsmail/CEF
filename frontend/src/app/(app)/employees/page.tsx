@@ -3,12 +3,13 @@
 import { useQuery } from "@tanstack/react-query";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { FileSpreadsheet, Plus, Search } from "lucide-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
-import { Input, Select } from "@/components/ui/form";
+import { Field, Input, Select } from "@/components/ui/form";
 import { ErrorState } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
 import { api, download, type Query } from "@/lib/api";
@@ -93,10 +94,10 @@ export default function EmployeesPage() {
     {
       id: "edit", header: "", enableSorting: false,
       cell: ({ row }) => can.write(me) ? (
-        <Button variant="secondary" onClick={(e) => { e.stopPropagation(); router.push(`/employees/${row.original.id}/edit`); }}>{t("common.edit")}</Button>
+        <Link href={`/employees/${row.original.id}/edit`} onClick={(e) => e.stopPropagation()} className="font-semibold text-brand-700 hover:underline">{t("common.edit")}</Link>
       ) : null,
     },
-  ], [t, label, locale, date, me, router]);
+  ], [t, label, locale, date, me]);
 
   async function exportXlsx() {
     setExporting(true);
@@ -121,33 +122,35 @@ export default function EmployeesPage() {
         </>} />
 
       <div className="mb-4 space-y-3 rounded-xl border border-line bg-white p-4">
+        <Field label={t("common.search")}>
         <div className="relative">
           <Search className="pointer-events-none absolute inset-y-0 start-3 my-auto size-4 text-muted" aria-hidden />
           <Input className="ps-9" placeholder={t("hr.search")} value={search} onChange={(e) => setSearch(e.target.value)} aria-label={t("common.search")} />
         </div>
+        </Field>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {showProvince && (
-            <Select value={provinceId} onChange={(e) => { setProvinceId(e.target.value); setCenterId(""); setPage(0); }} aria-label={t("hr.filter.province")}>
-              <option value="">{t("hr.filter.province")} — {t("common.all")}</option>
+            <Field label={t("hr.filter.province")}><Select value={provinceId} onChange={(e) => { setProvinceId(e.target.value); setCenterId(""); setPage(0); }}>
+              <option value="">{t("common.all")}</option>
               {provinces.data?.map((p) => <option key={p.id} value={p.id}>{name(p)}</option>)}
-            </Select>
+            </Select></Field>
           )}
-          <Select value={centerId} onChange={reset(setCenterId)} aria-label={t("hr.filter.center")}>
-            <option value="">{t("hr.filter.center")} — {t("common.all")}</option>
+          <Field label={t("hr.filter.center")}><Select value={centerId} onChange={reset(setCenterId)}>
+            <option value="">{t("common.all")}</option>
             {centers.data?.map((c) => <option key={c.id} value={c.id}>{name(c)}</option>)}
-          </Select>
-          <Select value={type} onChange={reset(setType)} aria-label={t("hr.filter.job")}>
-            <option value="">{t("hr.filter.job")} — {t("common.all")}</option>
+          </Select></Field>
+          <Field label={t("hr.filter.job")}><Select value={type} onChange={reset(setType)}>
+            <option value="">{t("common.all")}</option>
             {TYPES.map((x) => <option key={x} value={x}>{label("EmployeeType", x)}</option>)}
-          </Select>
-          <Select value={filiereId} onChange={reset(setFiliereId)} aria-label={t("hr.filter.filiere")}>
-            <option value="">{t("hr.filter.filiere")} — {t("common.all")}</option>
+          </Select></Field>
+          <Field label={t("hr.filter.filiere")}><Select value={filiereId} onChange={reset(setFiliereId)}>
+            <option value="">{t("common.all")}</option>
             {filieres.data?.map((f) => <option key={f.id} value={f.id}>{name(f)}</option>)}
-          </Select>
-          <Select value={activity} onChange={reset(setActivity)} aria-label={t("hr.filter.activity")}>
-            <option value="">{t("hr.filter.activity")} — {t("common.all")}</option>
+          </Select></Field>
+          <Field label={t("hr.filter.activity")}><Select value={activity} onChange={reset(setActivity)}>
+            <option value="">{t("common.all")}</option>
             {ACTIVITIES.map((x) => <option key={x} value={x}>{label("ActivityStatus", x)}</option>)}
-          </Select>
+          </Select></Field>
         </div>
       </div>
 
