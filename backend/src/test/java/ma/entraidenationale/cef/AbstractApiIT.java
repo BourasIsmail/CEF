@@ -84,4 +84,19 @@ public abstract class AbstractApiIT extends AbstractMysqlIT {
     protected long spaceTypeId(String code) {
         return jdbc.queryForObject("SELECT id FROM space_type WHERE code = ?", Long.class, code);
     }
+
+    /** Bénéficiaire du seed identifié par son numéro d'inscription (ex. « 2025-0001 »). */
+    protected long beneficiaryId(String registrationNumber) {
+        return jdbc.queryForObject("SELECT id FROM beneficiary WHERE registration_number = ?", Long.class, registrationNumber);
+    }
+
+    /** Dans le seed, l'identifiant d'inscription est celui du bénéficiaire. */
+    protected long enrollmentOf(long beneficiaryId) {
+        return jdbc.queryForObject("SELECT id FROM enrollment WHERE beneficiary_id = ?", Long.class, beneficiaryId);
+    }
+
+    /** Identifiant d'un élément créé, lu dans la réponse JSON ({"id":123,...}). */
+    protected static long idOf(String json) {
+        return Long.parseLong(json.replaceFirst("^\\{\"id\":(\\d+).*$", "$1"));
+    }
 }

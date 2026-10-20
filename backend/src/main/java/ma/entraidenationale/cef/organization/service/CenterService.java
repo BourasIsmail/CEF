@@ -124,7 +124,7 @@ public class CenterService {
 
     @Transactional
     public Detail update(Long id, Request req) {
-        Center c = loadManaged(id);
+        Center c = requireManaged(id);
         if (req.provincialDirectorateId() != null
                 && !req.provincialDirectorateId().equals(c.getProvincialDirectorate().getId())) {
             throw rule("center.province_immutable", "La province d'un centre ne peut pas être modifiée");
@@ -144,14 +144,14 @@ public class CenterService {
 
     @Transactional
     public Detail setActive(Long id, boolean active) {
-        Center c = loadManaged(id);
+        Center c = requireManaged(id);
         c.setActive(active);
         return toDetail(centers.saveAndFlush(c));
     }
 
     @Transactional
     public void delete(Long id) {
-        Center c = loadManaged(id);
+        Center c = requireManaged(id);
         Map<String, Long> usage = usageOf(c.getId());
         long total = usage.values().stream().mapToLong(Long::longValue).sum();
         if (total > 0) {
@@ -176,7 +176,7 @@ public class CenterService {
     }
 
     /** Centre visible ET modifiable (ADMIN, ou PROVINCIAL de sa province). */
-    private Center loadManaged(Long id) {
+    public Center requireManaged(Long id) {
         Center c = requireVisible(id);
         if (!currentUser.scope().managesProvince(c.getProvincialDirectorate().getId())) {
             throw new AccessDeniedException("Modification non autorisée sur ce centre");

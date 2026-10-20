@@ -31,6 +31,11 @@ class GlobalExceptionHandler {
         return problem(HttpStatus.CONFLICT, ex.getCode(), ex.getMessage());
     }
 
+    @ExceptionHandler(BadRequestException.class)
+    ProblemDetail badRequest(BadRequestException ex) {
+        return problem(HttpStatus.BAD_REQUEST, ex.getCode(), ex.getMessage());
+    }
+
     @ExceptionHandler(BusinessRuleException.class)
     ProblemDetail businessRule(BusinessRuleException ex) {
         return problem(HttpStatus.UNPROCESSABLE_ENTITY, ex.getCode(), ex.getMessage());

@@ -84,3 +84,79 @@ espace « autre » ⇒ précision ; mesure « autres » ⇒ texte ; partenaires 
 - Requêtes SQL d'agrégation : `ScopeSql.centerPredicate(...)` à ajouter à toute requête native qui lit des données
   de centre (utilisé par les statistiques à l'étape suivante).
 - Les principaux sont fabriqués par l'authentification JWT (étape sécurité) ; les tests utilisent `AppUserPrincipal`.
+
+---
+
+# API — bénéficiaires, inscriptions, examens, diplôme, audit
+
+## Droits et périmètre
+
+| | Provincial | Régional | Admin |
+|---|---|---|---|
+| Lire fiches, inscriptions, bulletins, historique | centres de sa province | centres de sa région | tout |
+| Créer / modifier / supprimer fiches, inscriptions, notes, diplômes | **sa province** | ✗ (lecture seule) | tout |
+| Journal d'audit global (`/api/audit`) | ✗ | ✗ | ✔ |
+
+Une fiche dont le centre est hors périmètre répond **404**. La liste applique le périmètre **avant** les filtres.
+
+## Bénéficiaires
+
+| Méthode | Chemin | Description |
+|---|---|---|
+| GET | `/beneficiaries` | liste paginée (SQL natif, une requête + COUNT). Filtres : `search` (noms AR/FR, n° d'inscription, pièce d'identité, téléphone), `regionId`, `provinceId`, `centerId`, `filiereId`, `seasonId` (défaut : saison courante), `status`, `category`, `gender`, `vulnerable`, `withoutEnrollment`. Tris : `rank`, `registrationNumber`, `registrationDate`, `nameAr`, `nameFr`, `birthDate`, `center`, `filiere`, `status`, `category` (tout autre critère : 400) |
+| GET | `/beneficiaries/{id}` | fiche complète : âge calculé, catégorie statistique, inscriptions (avec résumé des sessions et diplôme) |
+| GET | `/beneficiaries/{id}/history` | historique d'audit de la fiche (fiche, inscriptions, notes, diplôme) |
+| POST | `/beneficiaries` | création ; `enrollment` facultatif pour inscrire aussitôt |
+| PUT | `/beneficiaries/{id}` | modification (le centre est immuable) |
+| DELETE | `/beneficiaries/{id}` | refusé (409) s'il existe des résultats d'examen ou un diplôme |
+
+- **Numérotation** : `rankNumber` (الرقم الترتيبي, unique par centre) = max + 1 si absent ; `registrationNumber` généré
+  `{année}-{nnnn}` si absent, unique par centre.
+- **Situation sociale à choix multiple** : `vulnerable`, `disabilityType`, `migrationStatus`, `otherSocialSituation`.
+  Les valeurs « autre » exigent une précision ; les précisions sans objet sont effacées.
+- **Catégorie statistique** (une seule par personne) : migrant > handicap > autre > reste. La précarité seule = reste.
+
+## Inscriptions et cycle de vie
+
+| Méthode | Chemin | Description |
+|---|---|---|
+| POST | `/beneficiaries/{id}/enrollments` | inscription dans le centre du bénéficiaire ; saison courante par défaut ; filière assignée au centre ; une seule par saison |
+| GET/PUT/DELETE | `/enrollments/{id}` | lecture / dates et filière (si aucun résultat) / suppression (si aucun résultat) |
+| POST | `/enrollments/{id}/depart` | **parti** avant l'examen final : `departureDate` + `reason` obligatoires |
+| POST | `/enrollments/{id}/reinstate` | annule un départ |
+| POST | `/enrollments/{id}/finalize` | clôture sans rattrapage : session normale échouée → `FAILED`, absente → `ABSENT` |
+
+Statuts : `ENROLLED` → `DEPARTED` | `GRADUATED` | `FAILED` | `ABSENT`. Un bénéficiaire **reste inscrit** tant que le
+rattrapage est possible ; `GRADUATED`, `FAILED`, `ABSENT` sont **déduits des sessions** par le serveur (la session de
+rattrapage fait foi si elle existe).
+
+## Examens, bulletin, diplôme
+
+| Méthode | Chemin | Description |
+|---|---|---|
+| GET | `/enrollments/{id}/bulletin` | بيان النقط : modules de la filière + sessions (notes par module, moyennes, issue, mention) |
+| PUT | `/enrollments/{id}/sessions/{NORMAL\|MAKEUP}` | saisie d'une session (remplace la précédente) |
+| DELETE | `/enrollments/{id}/sessions/{type}` | suppression (le rattrapage d'abord) |
+| PUT/DELETE | `/enrollments/{id}/diploma` | diplôme (diplômés uniquement), numéro de série unique |
+
+Règles de calcul (le client envoie les notes, le serveur calcule) :
+
+- moyenne des modules = Σ(note × coefficient) / Σ coefficients, sur **tous** les modules de la filière ;
+- **moyenne générale = (moyenne des modules + note de l'examen final) / 2**, sans arrondi intermédiaire ;
+- réussite si la moyenne générale (arrondie à 2 décimales) atteint le **seuil** — 10 par défaut, modifiable à la saisie
+  (`passThreshold`) ;
+- **réussite exceptionnelle** (`exceptionalPass`) : seulement pour une session complète sous le seuil, avec justification ;
+  tracée (auteur) ; pas de mention ;
+- **absent** à un module ou à l'examen final ⇒ issue `ABSENT` (jamais « recalé ») ; saisie incomplète ⇒ `INCOMPLETE`,
+  aucune moyenne ;
+- **rattrapage** : possible après une session normale échouée ou absente ; il reprend **tous** les examens ; sa note
+  **remplace** la précédente (aucun plafond) ;
+- mentions : échelle provisoire (≥ 10 مقبول, ≥ 12 مستحسن, ≥ 14 جيد, ≥ 16 جيد جدا) — classe `MentionScale`.
+
+Un diplôme émis verrouille le résultat (409 `exam.diploma_issued`) jusqu'à sa suppression.
+
+## Audit
+
+Chaque création / modification / suppression de fiche, inscription, session d'examen et diplôme est tracée (qui, quand,
+IP, différences champ par champ `{champ: {old, new}}`), dans la transaction de l'opération. Une modification sans
+changement ne laisse pas de trace. L'historique est rattaché à la fiche du bénéficiaire.
