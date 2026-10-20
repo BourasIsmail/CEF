@@ -183,9 +183,9 @@ function Form({ center, spaceTypes, me }: { center?: CenterDetail; spaceTypes: S
   return (
     <form onSubmit={handleSubmit((v) => { setFormError(undefined); save.mutate(v); })} noValidate className="space-y-6">
       {formError && <p role="alert" className="rounded-lg bg-danger-50 px-4 py-3 text-sm text-danger">{formError}</p>}
-      <SectionNav sections={sections} />
+      <SectionNav sections={sections} numbered={false} />
 
-      <NumberedSection id="c1" num={1} title={sections[0].title}>
+      <NumberedSection numbered={false} id="c1" num={1} title={sections[0].title}>
         <OptionField control={control} name="areaType" legend={t("centers.field.area")}
           options={(["RURAL", "URBAN"] as const).map((a) => ({ value: a, label: label("AreaType", a) }))} />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -207,21 +207,22 @@ function Form({ center, spaceTypes, me }: { center?: CenterDetail; spaceTypes: S
           ) : (
             <>
               <Field label={t("centers.field.region")}><Input disabled readOnly value={regionLabel ?? ""} /></Field>
-              <Field label={t("centers.field.province")} hint={center ? undefined : t("centers.field.provinceHint")}><Input disabled readOnly value={provinceLabel ?? ""} /></Field>
+              <Field label={t("centers.field.province")}><Input disabled readOnly value={provinceLabel ?? ""} /></Field>
             </>
           )}
-          <Field label={t("centers.field.name")} required error={errors.nameAr?.message} className="lg:col-span-2"><Input invalid={!!errors.nameAr} {...register("nameAr", required)} /></Field>
+          <Field label={t("centers.field.name")} required error={errors.nameAr?.message}><Input invalid={!!errors.nameAr} {...register("nameAr", required)} /></Field>
           <Field label={t("centers.field.commune")} required error={errors.communeId?.message}>
             <Select invalid={!!errors.communeId} {...register("communeId", required)}>
               <option value="">{t("common.select")}</option>
               {communes.data?.map((c) => <option key={c.id} value={c.id}>{name(c)}</option>)}
             </Select>
           </Field>
-          <Field label={t("centers.field.address")} className="lg:col-span-3"><Input {...register("address")} /></Field>
+          <Field label={t("centers.field.address")} className="sm:col-span-2 lg:col-span-4"><Input {...register("address")} /></Field>
         </div>
+        {!(admin && !center) && <div className="rounded-lg bg-surface px-4 py-3 text-sm text-muted">{t("centers.field.provinceHint")}</div>}
       </NumberedSection>
 
-      <NumberedSection id="c2" num={2} title={sections[1].title}>
+      <NumberedSection numbered={false} id="c2" num={2} title={sections[1].title}>
         <OptionField control={control} name="buildingType" legend={t("centers.field.buildingLegend")}
           options={BUILDINGS.map((b) => ({ value: b, label: t(`centers.opt.building.${b}` as MessageKey) }))} />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -238,7 +239,7 @@ function Form({ center, spaceTypes, me }: { center?: CenterDetail; spaceTypes: S
         </div>
       </NumberedSection>
 
-      <NumberedSection id="c2b" num={3} title={sections[2].title}>
+      <NumberedSection numbered={false} id="c2b" num={3} title={sections[2].title}>
         <OptionField control={control} name="spaceIds" multiple legend={t("centers.field.spacesLegend")}
           options={spaceTypes.map((s) => ({ value: String(s.id), label: name(s) }))} />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -249,7 +250,7 @@ function Form({ center, spaceTypes, me }: { center?: CenterDetail; spaceTypes: S
         </div>
       </NumberedSection>
 
-      <NumberedSection id="c3" num={4} title={sections[3].title}>
+      <NumberedSection numbered={false} id="c3" num={4} title={sections[3].title}>
         <OptionField control={control} name="landStatus" legend={t("centers.field.landLegend")}
           options={LANDS.map((l) => ({ value: l, label: t(`centers.opt.land.${l}` as MessageKey) }))} />
         <div className="grid gap-4 sm:grid-cols-2">
@@ -259,7 +260,7 @@ function Form({ center, spaceTypes, me }: { center?: CenterDetail; spaceTypes: S
         </div>
       </NumberedSection>
 
-      <NumberedSection id="c4" num={5} title={sections[4].title}>
+      <NumberedSection numbered={false} id="c4" num={5} title={sections[4].title}>
         <OptionField control={control} name="managementMode" legend={t("centers.field.mgmtLegend")}
           options={MODES.map((m) => ({ value: m, label: t(`centers.opt.mgmt.${m}` as MessageKey) }))} />
         <div className="grid gap-4 sm:grid-cols-2">
@@ -269,20 +270,20 @@ function Form({ center, spaceTypes, me }: { center?: CenterDetail; spaceTypes: S
 
       <div id="c5" className="scroll-mt-20 space-y-6">
         {assoc.fields.length === 0 && (
-          <NumberedSection id="c5-none" num={6} title={sections[5].title}><p className="text-sm text-muted">{t("centers.association.none")}</p></NumberedSection>
+          <NumberedSection numbered={false} id="c5-none" num={6} title={sections[5].title}><p className="text-sm text-muted">{t("centers.association.none")}</p></NumberedSection>
         )}
         {assoc.fields.map((f, i) => (
           <NumberedSection key={f.id} id={`c5-${i}`} num={6 + i} title={t("centers.association.title", { n: i + 1 })}>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Field label={t("centers.association.name")} required error={errors.associations?.[i]?.associationId?.message} className="sm:col-span-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <Field label={t("centers.association.name")} required error={errors.associations?.[i]?.associationId?.message}>
                 <Select invalid={!!errors.associations?.[i]?.associationId} {...register(`associations.${i}.associationId` as const, required)}>
                   <option value="">{t("common.select")}</option>
                   {directory.data?.map((a) => <option key={a.id} value={a.id}>{name(a)}</option>)}
                 </Select>
               </Field>
-              <Field label={t("centers.association.subject")} className="sm:col-span-2"><Input {...register(`associations.${i}.agreementSubject` as const)} /></Field>
+              <Field label={t("centers.association.subject")}><Input {...register(`associations.${i}.agreementSubject` as const)} /></Field>
               <Field label={t("centers.association.date")}><Input type="date" className="ltr-field" {...register(`associations.${i}.agreementDate` as const)} /></Field>
-              <Field label={t("centers.association.reference")}><Input {...register(`associations.${i}.agreementReference` as const)} /></Field>
+              <Field label={t("centers.association.reference")} className="sm:col-span-2 lg:col-span-3"><Input {...register(`associations.${i}.agreementReference` as const)} /></Field>
             </div>
             <OptionField control={control} name={`associations.${i}.partnerTypeIds` as const} multiple legend={t("centers.field.partnersLegend")}
               options={(partnerTypes.data ?? []).map((p) => ({ value: String(p.id), label: name(p) }))} />
@@ -307,12 +308,12 @@ function Form({ center, spaceTypes, me }: { center?: CenterDetail; spaceTypes: S
         </div>
       </div>
 
-      <NumberedSection id="c6" num={6 + Math.max(assoc.fields.length, 1)} title={t("centers.hr.title")}>
+      <NumberedSection numbered={false} id="c6" num={6 + Math.max(assoc.fields.length, 1)} title={t("centers.hr.title")}>
         {center ? <StaffTable summary={staff.data} centerId={center.id} /> : <p className="text-sm text-muted">{t("centers.hr.afterCreate")}</p>}
       </NumberedSection>
 
-      <div className="sticky bottom-0 -mx-4 flex justify-start gap-3 border-t border-line bg-surface/95 px-4 py-3 backdrop-blur lg:-mx-8 lg:px-8">
-        <Button type="submit" loading={save.isPending} className="min-h-12 px-7">{t("common.save")}</Button>
+      <div className="flex justify-start gap-3 pt-2">
+        <Button type="submit" loading={save.isPending} className="min-h-12 px-7">{center ? t("ben.saveChanges") : t("common.save")}</Button>
         <Button variant="secondary" className="min-h-12 px-6" onClick={() => router.back()}>{t("common.cancel")}</Button>
       </div>
 

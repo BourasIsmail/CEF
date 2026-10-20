@@ -17,7 +17,7 @@ export default function EditCenterPage() {
   if (q.isError) return <ErrorState error={q.error} />;
   return (
     <>
-      <PageHeader title={`${t("centers.edit")}: ${name(q.data)}`}
+      <PageHeader back={{ href: "/centers", label: t("centers.title") }} title={`${t("centers.edit")}: ${name(q.data)}`}
         subtitle={t("centers.header.counts", { b: num(q.data.beneficiariesCount), f: num(q.data.filieresCount), s: num(q.data.staffCount) })} />
       <CenterForm center={q.data} />
     </>

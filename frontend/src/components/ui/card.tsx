@@ -1,3 +1,4 @@
+import Link from "next/link";
 import clsx from "clsx";
 import type { ReactNode } from "react";
 
@@ -28,10 +29,11 @@ export function Badge({ tone = "neutral", children }: { tone?: Tone; children: R
   return <span className={clsx("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold", tones[tone])}>{children}</span>;
 }
 
-export function PageHeader({ title, subtitle, actions }: { title: ReactNode; subtitle?: ReactNode; actions?: ReactNode }) {
+export function PageHeader({ title, subtitle, actions, back }: { title: ReactNode; subtitle?: ReactNode; actions?: ReactNode; back?: { href: string; label: string } }) {
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
       <div>
+        {back && <Link href={back.href} className="text-sm font-semibold text-brand-700 hover:underline">› {back.label}</Link>}
         <h1 className="text-[28px] font-bold leading-tight text-ink">{title}</h1>
         {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
       </div>

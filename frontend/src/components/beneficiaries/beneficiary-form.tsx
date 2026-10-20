@@ -182,38 +182,38 @@ export function BeneficiaryForm({ beneficiary }: { beneficiary?: BeneficiaryDeta
       <SectionNav sections={sections} />
 
       <NumberedSection id="p1" num={1} title={sections[0].title}>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label={t("ben.field.rank")}><Input disabled readOnly value={beneficiary ? num(beneficiary.rankNumber) : t("ben.rank.auto")} /></Field>
-          <Field label={t("ben.field.reg")} hint={beneficiary ? undefined : t("ben.field.regHint")} error={err("registrationNumber")}><Input className="ltr-field" {...register("registrationNumber")} /></Field>
-          <Field label={t("ben.field.regDate")} required error={err("registrationDate")}><Input type="date" className="ltr-field" invalid={!!errors.registrationDate} {...register("registrationDate", required)} /></Field>
-          <Field label={t("ben.field.gender")} required error={err("gender")}>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-12">
+          <Field className="sm:col-span-1 lg:col-span-3" label={t("ben.field.rank")}><Input disabled readOnly value={beneficiary ? num(beneficiary.rankNumber) : t("ben.rank.auto")} /></Field>
+          <Field className="sm:col-span-1 lg:col-span-3" label={t("ben.field.reg")} hint={beneficiary ? undefined : t("ben.field.regHint")} error={err("registrationNumber")}><Input className="ltr-field" {...register("registrationNumber")} /></Field>
+          <Field className="sm:col-span-1 lg:col-span-3" label={t("ben.field.regDate")} required error={err("registrationDate")}><Input type="date" className="ltr-field" invalid={!!errors.registrationDate} {...register("registrationDate", required)} /></Field>
+          <Field className="sm:col-span-1 lg:col-span-3" label={t("ben.field.gender")} required error={err("gender")}>
             <Select invalid={!!errors.gender} {...register("gender", required)}>
               <option value="">{t("common.select")}</option>
               <option value="F">{label("Gender", "F")}</option>
               <option value="M">{label("Gender", "M")}</option>
             </Select>
           </Field>
-          <Field label={t("ben.field.nameAr")} required error={err("fullNameAr")} className="lg:col-span-2"><Input invalid={!!errors.fullNameAr} {...register("fullNameAr", required)} /></Field>
-          <Field label={t("ben.field.nameFr")} error={err("fullNameFr")} className="lg:col-span-2"><Input className="ltr-field" {...register("fullNameFr")} /></Field>
-          <Field label={t("ben.field.birthDate")} required error={err("birthDate")}><Input type="date" className="ltr-field" invalid={!!errors.birthDate} {...register("birthDate", required)} /></Field>
-          <Field label={t("ben.field.age")}><Input disabled readOnly value={age == null ? "" : num(age)} /></Field>
-          <Field label={t("ben.field.birthPlace")}><Input {...register("birthPlace")} /></Field>
-          <Field label={t("ben.field.idType")}>
+          <Field className="lg:col-span-4" label={t("ben.field.nameAr")} required error={err("fullNameAr")}><Input invalid={!!errors.fullNameAr} {...register("fullNameAr", required)} /></Field>
+          <Field className="lg:col-span-4" label={t("ben.field.nameFr")} error={err("fullNameFr")}><Input className="ltr-field" {...register("fullNameFr")} /></Field>
+          <Field className="lg:col-span-2" label={t("ben.field.birthDate")} required error={err("birthDate")}><Input type="date" className="ltr-field" invalid={!!errors.birthDate} {...register("birthDate", required)} /></Field>
+          <Field className="lg:col-span-2" label={t("ben.field.age")}><Input disabled readOnly value={age == null ? "" : num(age)} /></Field>
+          <Field className="lg:col-span-3" label={t("ben.field.birthPlace")}><Input {...register("birthPlace")} /></Field>
+          <Field className="lg:col-span-3" label={t("ben.field.idType")}>
             <Select {...register("idDocumentType")}>
               <option value="">{t("common.select")}</option>
               {ID_TYPES.map((x) => <option key={x} value={x}>{label("IdDocumentType", x)}</option>)}
             </Select>
           </Field>
-          <Field label={t("ben.field.idNumber")}><Input className="ltr-field" {...register("idDocumentNumber")} /></Field>
-          <Field label={t("ben.field.phone")}><Input type="tel" className="ltr-field" {...register("phone")} /></Field>
-          <Field label={t("ben.field.address")} className="lg:col-span-2"><Input {...register("address")} /></Field>
-          <Field label={t("ben.field.education")}>
+          <Field className="lg:col-span-3" label={t("ben.field.idNumber")}><Input className="ltr-field" {...register("idDocumentNumber")} /></Field>
+          <Field className="lg:col-span-3" label={t("ben.field.phone")}><Input type="tel" className="ltr-field" {...register("phone")} /></Field>
+          <Field label={t("ben.field.address")} className="lg:col-span-8"><Input {...register("address")} /></Field>
+          <Field className="lg:col-span-4" label={t("ben.field.education")}>
             <Select {...register("educationLevel")}>
               <option value="">{t("common.select")}</option>
               {LEVELS.map((x) => <option key={x} value={x}>{label("EducationLevel", x)}</option>)}
             </Select>
           </Field>
-          <Field label={t("ben.field.info")} className="sm:col-span-2 lg:col-span-4"><Textarea {...register("additionalInfo")} /></Field>
+          <Field label={t("ben.field.info")} className="sm:col-span-2 lg:col-span-12"><Textarea {...register("additionalInfo")} /></Field>
         </div>
         <OptionField control={control} name="familyStatus" legend={t("ben.legend.family")}
           options={FAMILY.map((x) => ({ value: x, label: x === "OTHER" ? t("ben.family.other") : label("FamilyStatus", x) }))} />
@@ -263,32 +263,32 @@ export function BeneficiaryForm({ beneficiary }: { beneficiary?: BeneficiaryDeta
           <StatusPills status={status} />
           {beneficiary && <p className="mt-1 text-xs text-muted">{t("ben.enroll.statusAuto")}</p>}
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Field label={t("ben.enroll.season")}>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-12">
+          <Field className="lg:col-span-3" label={t("ben.enroll.season")}>
             <Select disabled={!!enrollment} {...register("seasonId")}>
               <option value="">{t("ben.enroll.currentSeason")}</option>
               {seasons.data?.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
             </Select>
           </Field>
-          <Field label={t("ben.field.center")} required error={err("centerId")}>
+          <Field className="lg:col-span-3" label={t("ben.field.center")} required error={err("centerId")}>
             <Select disabled={!!beneficiary} invalid={!!errors.centerId} {...register("centerId", required)}>
               <option value="">{t("common.select")}</option>
               {beneficiary && <option value={beneficiary.centerId}>{beneficiary.centerNameAr}</option>}
               {centers.data?.filter((c) => c.id !== beneficiary?.centerId).map((c) => <option key={c.id} value={c.id}>{name(c)}</option>)}
             </Select>
           </Field>
-          <Field label={t("ben.enroll.filiere")} hint={lockedFiliere ? t("ben.enroll.lockedFiliere") : undefined} error={err("filiereId")}>
+          <Field className="lg:col-span-3" label={t("ben.enroll.filiere")} hint={lockedFiliere ? t("ben.enroll.lockedFiliere") : undefined} error={err("filiereId")}>
             <Select disabled={lockedFiliere || !centerId} {...register("filiereId")}>
               <option value="">{t("common.select")}</option>
               {filieres.data?.filter((f) => f.active || f.filiereId === enrollment?.filiereId).map((f) => <option key={f.filiereId} value={f.filiereId}>{name(f)}</option>)}
             </Select>
           </Field>
-          <Field label={t("ben.enroll.start")} required={!!v.filiereId} error={err("startDate")}>
+          <Field className="lg:col-span-3" label={t("ben.enroll.start")} required={!!v.filiereId} error={err("startDate")}>
             <Input type="date" className="ltr-field" disabled={departed} {...register("startDate", { validate: (x) => !v.filiereId || !!x || t("common.required") })} />
           </Field>
-          <Field label={t("ben.enroll.exam")}><Input type="date" className="ltr-field" disabled={departed} {...register("examDate")} /></Field>
-          <Field label={t("ben.enroll.departDate")}><Input type="date" className="ltr-field" disabled readOnly value={enrollment?.departureDate ?? ""} /></Field>
-          <Field label={t("ben.enroll.departReason")} className="sm:col-span-2"><Input disabled readOnly value={enrollment?.departureReason ?? ""} /></Field>
+          <Field className="lg:col-span-4" label={t("ben.enroll.exam")}><Input type="date" className="ltr-field" disabled={departed} {...register("examDate")} /></Field>
+          <Field className="lg:col-span-4" label={t("ben.enroll.departDate")}><Input type="date" className="ltr-field" disabled readOnly value={enrollment?.departureDate ?? ""} /></Field>
+          <Field label={t("ben.enroll.departReason")} className="sm:col-span-2 lg:col-span-4"><Input disabled readOnly value={enrollment?.departureReason ?? ""} /></Field>
         </div>
       </NumberedSection>
 
@@ -317,8 +317,8 @@ export function BeneficiaryForm({ beneficiary }: { beneficiary?: BeneficiaryDeta
         </div>
       </NumberedSection>
 
-      <div className="sticky bottom-0 -mx-4 flex justify-start gap-3 border-t border-line bg-surface/95 px-4 py-3 backdrop-blur lg:-mx-8 lg:px-8">
-        <Button type="submit" loading={save.isPending} className="min-h-12 px-7">{t("common.save")}</Button>
+      <div className="flex justify-start gap-3 pt-2">
+        <Button type="submit" loading={save.isPending} className="min-h-12 px-7">{beneficiary ? t("ben.saveChanges") : t("common.save")}</Button>
         <Button variant="secondary" className="min-h-12 px-6" onClick={() => router.back()}>{t("common.cancel")}</Button>
       </div>
 

@@ -7,7 +7,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import { OptionField } from "@/components/ui/option-group";
-import { NumberedSection, SectionNav } from "@/components/ui/section";
+import { NumberedSection } from "@/components/ui/section";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/api";
 import { useMe } from "@/lib/auth";
@@ -118,7 +118,7 @@ export function EmployeeForm({ employee }: { employee?: EmployeeDetail }) {
         : await api<EmployeeDetail>("/employees", { method: "POST", body });
       if (f.employeeType === "GUEST_TRAINER" && f.gFiliereId) {
         const contract = {
-          seasonId: Number(f.gSeasonId), filiereId: Number(f.gFiliereId), diplomaYear: n(f.gDiplomaYear), workStartDate: f.gStart || undefined,
+          seasonId: Number(f.gSeasonId || seasons.data?.find((x) => x.current)?.id), filiereId: Number(f.gFiliereId), diplomaYear: n(f.gDiplomaYear), workStartDate: f.gStart || undefined,
           hourlyRateMad: n(f.gRate), monthsPerYear: n(f.gMonths), hoursPerMonth: n(f.gHours), beneficiariesCount: n(f.gCount),
         };
         const existing = employee?.guestContracts[0];
@@ -149,14 +149,7 @@ export function EmployeeForm({ employee }: { employee?: EmployeeDetail }) {
   return (
     <form onSubmit={handleSubmit((f) => { setFormError(undefined); save.mutate(f); })} noValidate className="space-y-6">
       {formError && <p role="alert" className="rounded-lg bg-danger-50 px-4 py-3 text-sm text-danger">{formError}</p>}
-      <SectionNav sections={sections} />
-
-      <NumberedSection id="s1" num={1} title={sections[0].title}>
-        <OptionField control={control} name="employeeType" legend={t("hr.legend.type")}
-          options={TYPES.map((x) => ({ value: x, label: t(`hr.opt.type.${x}` as MessageKey) }))} />
-        <OptionField control={control} name="administrativeStatus" legend={t("hr.legend.status")}
-          options={STATUSES.map((x) => ({ value: x, label: t(`hr.opt.status.${x}` as MessageKey) }))} />
-        {(errors.employeeType || errors.administrativeStatus) && <p role="alert" className="text-xs text-danger">{t("common.required")}</p>}
+      <NumberedSection id="s1" num={1} title={sections[0].title} tone="muted" banner={t("hr.banner.sections")}>
         <div className="grid gap-4 sm:grid-cols-2">
           {needsProvince ? (
             <Field label={t("hr.field.province")} required error={err("provincialDirectorateId")}>
@@ -175,6 +168,13 @@ export function EmployeeForm({ employee }: { employee?: EmployeeDetail }) {
               {centers.data?.filter((c) => c.id !== employee?.centerId).map((c) => <option key={c.id} value={c.id}>{name(c)}</option>)}
             </Select>
           </Field>
+        </div>
+        <OptionField control={control} name="employeeType" legend={t("hr.legend.type")}
+          options={TYPES.map((x) => ({ value: x, label: t(`hr.opt.type.${x}` as MessageKey) }))} />
+        <OptionField control={control} name="administrativeStatus" legend={t("hr.legend.status")}
+          options={STATUSES.map((x) => ({ value: x, label: t(`hr.opt.status.${x}` as MessageKey) }))} />
+        {(errors.employeeType || errors.administrativeStatus) && <p role="alert" className="text-xs text-danger">{t("common.required")}</p>}
+        <div className="grid gap-4 sm:grid-cols-2">
           <Field label={t("hr.field.otherSector")} required={status === "OTHER_SECTOR"} error={err("otherSectorText")}>
             <Input disabled={status !== "OTHER_SECTOR"} invalid={!!errors.otherSectorText}
               {...register("otherSectorText", { validate: (x) => status !== "OTHER_SECTOR" || !!x.trim() || t("common.required") })} />
@@ -190,48 +190,48 @@ export function EmployeeForm({ employee }: { employee?: EmployeeDetail }) {
       </NumberedSection>
 
       <NumberedSection id="s2" num={2} title={sections[1].title}>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label={t("hr.field.nameAr")} required error={err("fullNameAr")} className="lg:col-span-2"><Input invalid={!!errors.fullNameAr} {...register("fullNameAr", required)} /></Field>
-          <Field label={t("hr.field.nameFr")} className="lg:col-span-2"><Input className="ltr-field" {...register("fullNameFr")} /></Field>
-          <Field label={t("hr.field.gender")} required error={err("gender")}>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-12">
+          <Field label={t("hr.field.nameAr")} required error={err("fullNameAr")} className="lg:col-span-4"><Input invalid={!!errors.fullNameAr} {...register("fullNameAr", required)} /></Field>
+          <Field label={t("hr.field.nameFr")} className="lg:col-span-4"><Input className="ltr-field" {...register("fullNameFr")} /></Field>
+          <Field label={t("hr.field.gender")} required error={err("gender")} className="lg:col-span-2">
             <Select invalid={!!errors.gender} {...register("gender", required)}>
               <option value="">{t("common.select")}</option>
               <option value="F">{label("Gender", "F")}</option>
               <option value="M">{label("Gender", "M")}</option>
             </Select>
           </Field>
-          <Field label={t("hr.field.birthDate")}><Input type="date" className="ltr-field" {...register("birthDate")} /></Field>
-          <Field label={t("hr.field.birthPlace")}><Input {...register("birthPlace")} /></Field>
-          <Field label={t("hr.field.idType")}>
+          <Field className="lg:col-span-2" label={t("hr.field.birthDate")}><Input type="date" className="ltr-field" {...register("birthDate")} /></Field>
+          <Field className="lg:col-span-3" label={t("hr.field.birthPlace")}><Input {...register("birthPlace")} /></Field>
+          <Field className="lg:col-span-3" label={t("hr.field.idType")}>
             <Select {...register("idDocumentType")}>
               <option value="">{t("common.select")}</option>
               {ID_TYPES.map((x) => <option key={x} value={x}>{label("IdDocumentType", x)}</option>)}
             </Select>
           </Field>
-          <Field label={t("hr.field.idNumber")}><Input className="ltr-field" {...register("idDocumentNumber")} /></Field>
-          <Field label={t("hr.field.address")} className="lg:col-span-2"><Input {...register("address")} /></Field>
-          <Field label={t("hr.field.phone")}><Input type="tel" className="ltr-field" {...register("phone")} /></Field>
-          <Field label={t("hr.field.email")} error={err("email")} className="lg:col-span-2"><Input type="email" className="ltr-field" {...register("email")} /></Field>
+          <Field className="lg:col-span-2" label={t("hr.field.idNumber")}><Input className="ltr-field" {...register("idDocumentNumber")} /></Field>
+          <Field label={t("hr.field.address")} className="lg:col-span-4"><Input {...register("address")} /></Field>
+          <Field className="lg:col-span-4" label={t("hr.field.phone")}><Input type="tel" className="ltr-field" {...register("phone")} /></Field>
+          <Field label={t("hr.field.email")} error={err("email")} className="lg:col-span-8"><Input type="email" className="ltr-field" {...register("email")} /></Field>
         </div>
       </NumberedSection>
 
       <NumberedSection id="s3" num={3} title={sections[2].title}>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label={t("hr.field.education")}>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-12">
+          <Field className="lg:col-span-3" label={t("hr.field.education")}>
             <Select {...register("educationLevel")}>
               <option value="">{t("common.select")}</option>
               {LEVELS.map((x) => <option key={x} value={x}>{label("EducationLevel", x)}</option>)}
             </Select>
           </Field>
-          <Field label={t("hr.field.diploma")} className="lg:col-span-2"><Input {...register("diplomaTitle")} /></Field>
-          <Field label={t("hr.field.specialty")}><Input {...register("specialty")} /></Field>
-          <Field label={t("hr.field.diplomaDate")}><Input type="date" className="ltr-field" {...register("diplomaDate")} /></Field>
-          <Field label={t("hr.field.experience")} className="lg:col-span-2"><Input {...register("experienceDescription")} /></Field>
-          <Field label={t("hr.field.otherQualifications")} className="sm:col-span-2 lg:col-span-4"><Textarea {...register("otherQualifications")} /></Field>
+          <Field label={t("hr.field.diploma")} className="lg:col-span-3"><Input {...register("diplomaTitle")} /></Field>
+          <Field className="lg:col-span-3" label={t("hr.field.specialty")}><Input {...register("specialty")} /></Field>
+          <Field className="lg:col-span-3" label={t("hr.field.diplomaDate")}><Input type="date" className="ltr-field" {...register("diplomaDate")} /></Field>
+          <Field label={t("hr.field.experience")} className="sm:col-span-2 lg:col-span-12"><Input {...register("experienceDescription")} /></Field>
+          <Field label={t("hr.field.otherQualifications")} className="sm:col-span-2 lg:col-span-12"><Textarea {...register("otherQualifications")} /></Field>
         </div>
       </NumberedSection>
 
-      <NumberedSection id="s4" num={4} title={sections[3].title}>
+      <NumberedSection id="s4" num={4} title={sections[3].title} tone="info" banner={t("hr.banner.en")}>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <Field label={t("hr.field.grade")}>
             <Select disabled={!en} {...register("enGrade")}>
@@ -253,36 +253,31 @@ export function EmployeeForm({ employee }: { employee?: EmployeeDetail }) {
             <Select {...register("activityStatus")}>{ACTIVITIES.map((x) => <option key={x} value={x}>{label("ActivityStatus", x)}</option>)}</Select>
           </Field>
         </div>
-        {!en && <p className="text-xs text-muted">{t("hr.enOnly")}</p>}
       </NumberedSection>
 
       <NumberedSection id="s5" num={5} title={sections[4].title} tone="muted" banner={guest ? (employee && employee.guestContracts.length > 1 ? t("hr.guest.manageInDetail") : undefined) : t("hr.guest.onlyGuest")}>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label={t("hr.guest.fullName")} className="lg:col-span-2"><Input disabled readOnly value={v.fullNameAr ?? ""} /></Field>
-          <Field label={t("hr.guest.diplomaType")} className="lg:col-span-2"><Input disabled readOnly value={v.diplomaTitle ?? ""} /></Field>
-          <Field label={t("hr.guest.season")} required={contractFilled}>
-            <Select disabled={!guest} invalid={!!errors.gSeasonId} {...register("gSeasonId", { validate: (x) => !contractFilled || !!x || t("common.required") })}>
-              <option value="">{t("common.select")}</option>
-              {seasons.data?.map((s) => <option key={s.id} value={s.id}>{s.label}{s.current ? " ✓" : ""}</option>)}
-            </Select>
-          </Field>
+          <Field label={t("hr.guest.fullName")} className="lg:col-span-1"><Input disabled readOnly value={v.fullNameAr ?? ""} /></Field>
+          <Field label={t("hr.guest.diplomaType")}><Input disabled readOnly value={v.diplomaTitle ?? ""} /></Field>
+          <Field label={t("hr.guest.diplomaYearLong")}><Input type="number" min={1950} max={2100} className="ltr-field" disabled={!guest} {...register("gDiplomaYear")} /></Field>
+          <Field label={t("hr.guest.startLong")}><Input type="date" className="ltr-field" disabled={!guest} {...register("gStart")} /></Field>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <Field label={t("hr.guest.rateLong")}><Input type="number" step="0.01" min={0} className="ltr-field" disabled={!guest} {...register("gRate")} /></Field>
+          <Field label={t("hr.guest.monthsLong")}><Input type="number" min={1} max={12} className="ltr-field" disabled={!guest} {...register("gMonths")} /></Field>
+          <Field label={t("hr.guest.hoursLong")}><Input type="number" step="0.01" min={0} className="ltr-field" disabled={!guest} {...register("gHours")} /></Field>
           <Field label={t("hr.guest.filiereLong")}>
             <Select disabled={!guest} {...register("gFiliereId")}>
               <option value="">{t("common.select")}</option>
               {filiereOptions.map((f) => <option key={f.id} value={f.id}>{name(f)}</option>)}
             </Select>
           </Field>
-          <Field label={t("hr.guest.diplomaYearLong")}><Input type="number" min={1950} max={2100} className="ltr-field" disabled={!guest} {...register("gDiplomaYear")} /></Field>
-          <Field label={t("hr.guest.startLong")}><Input type="date" className="ltr-field" disabled={!guest} {...register("gStart")} /></Field>
-          <Field label={t("hr.guest.rateLong")}><Input type="number" step="0.01" min={0} className="ltr-field" disabled={!guest} {...register("gRate")} /></Field>
-          <Field label={t("hr.guest.monthsLong")}><Input type="number" min={1} max={12} className="ltr-field" disabled={!guest} {...register("gMonths")} /></Field>
-          <Field label={t("hr.guest.hoursLong")}><Input type="number" step="0.01" min={0} className="ltr-field" disabled={!guest} {...register("gHours")} /></Field>
           <Field label={t("hr.guest.countLong")}><Input type="number" min={0} className="ltr-field" disabled={!guest} {...register("gCount")} /></Field>
         </div>
       </NumberedSection>
 
-      <div className="sticky bottom-0 -mx-4 flex justify-start gap-3 border-t border-line bg-surface/95 px-4 py-3 backdrop-blur lg:-mx-8 lg:px-8">
-        <Button type="submit" loading={save.isPending} className="min-h-12 px-7">{t("common.save")}</Button>
+      <div className="flex justify-start gap-3 pt-2">
+        <Button type="submit" loading={save.isPending} className="min-h-12 px-7">{employee ? t("ben.saveChanges") : t("common.save")}</Button>
         <Button variant="secondary" className="min-h-12 px-6" onClick={() => router.back()}>{t("common.cancel")}</Button>
       </div>
     </form>

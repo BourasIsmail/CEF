@@ -16,7 +16,7 @@ export default function NewEmployeePage() {
   if (!can.write(me)) return null;
   return (
     <>
-      <PageHeader title={t("hr.new")} />
+      <PageHeader back={{ href: "/employees", label: t("hr.title") }} title={t("hr.new")} />
       <EmployeeForm />
     </>
   );

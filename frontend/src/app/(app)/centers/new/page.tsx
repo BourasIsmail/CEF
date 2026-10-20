@@ -16,7 +16,7 @@ export default function NewCenterPage() {
   if (!can.write(me)) return null;
   return (
     <>
-      <PageHeader title={t("centers.new")} />
+      <PageHeader back={{ href: "/centers", label: t("centers.title") }} title={t("centers.new")} />
       <CenterForm />
     </>
   );

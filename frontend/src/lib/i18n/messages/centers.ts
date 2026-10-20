@@ -27,7 +27,7 @@ const ar = {
   "centers.section.filieres": "الشعب المعتمدة بالمركز",
   "centers.field.region": "الجهة",
   "centers.field.province": "الإقليم",
-  "centers.field.provinceHint": "تُحدد الجهة والإقليم تلقائيا حسب حسابك",
+  "centers.field.provinceHint": "الجهة والإقليم محددان تلقائيا من حساب المستخدم الإقليمي، ولا يمكنه إضافة مراكز إلا داخل إقليمه.",
   "centers.field.commune": "الجماعة",
   "centers.field.name": "اسم المركز",
   "centers.field.nameFr": "الاسم بالفرنسية",

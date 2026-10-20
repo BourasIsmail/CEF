@@ -16,7 +16,7 @@ export default function NewBeneficiaryPage() {
   if (!can.write(me)) return null;
   return (
     <>
-      <PageHeader title={t("ben.new")} />
+      <PageHeader back={{ href: "/beneficiaries", label: t("ben.title") }} title={t("ben.new")} />
       <BeneficiaryForm />
     </>
   );
