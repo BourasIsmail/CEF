@@ -1,112 +1,159 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useMe } from "@/lib/auth";
+import Link from "next/link";
+import { useState } from "react";
 import { Card, PageHeader } from "@/components/ui/card";
+import { Select } from "@/components/ui/form";
 import { ErrorState, Spinner } from "@/components/ui/states";
 import { api } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
-import type { Cell, Dashboard } from "@/lib/types";
+import { useSeasons } from "@/lib/queries";
+import type { BeneficiarySummary, Cell, Dashboard, PageResponse } from "@/lib/types";
 
-function Stat({ label, cell, value }: { label: string; cell?: Cell; value?: number }) {
-  const { t, num } = useI18n();
-  return (
-    <div className="rounded-xl border border-line bg-white p-5">
-      <div className="text-sm text-muted">{label}</div>
-      <div className="mt-1 text-3xl font-bold text-brand-700">{num(cell?.total ?? value ?? 0)}</div>
-      {cell && (
-        <div className="mt-1 text-xs text-muted">{t("dashboard.males", { n: num(cell.male) })} · {t("dashboard.females", { n: num(cell.female) })}</div>
-      )}
-    </div>
-  );
-}
+const CATEGORY_COLOR = { MIGRANT: "#0f5c5a", DISABLED: "#f2b84b", OTHER: "#b5483a", REMAINING: "#9db3b0" } as const;
+const CATEGORY_ORDER = ["MIGRANT", "DISABLED", "OTHER", "REMAINING"] as const;
 
-function Bar({ label, value, max, tone = "bg-brand-600" }: { label: string; value: number; max: number; tone?: string }) {
-  const { num } = useI18n();
+function Kpi({ label, value, sub, color }: { label: string; value: string; sub: string; color: string }) {
   return (
-    <div className="flex items-center gap-3 text-sm">
-      <span className="w-40 shrink-0 truncate text-muted sm:w-56" title={label}>{label}</span>
-      <div className="h-3 flex-1 overflow-hidden rounded bg-surface">
-        <div className={`h-full rounded ${tone}`} style={{ width: `${max > 0 ? Math.max(2, (value / max) * 100) : 0}%` }} />
-      </div>
-      <span className="w-14 text-end font-medium tabular-nums">{num(value)}</span>
+    <div className="flex flex-col gap-1.5 rounded-xl border border-line bg-white p-5">
+      <div className="text-sm font-medium text-muted">{label}</div>
+      <div className="text-4xl font-bold leading-tight" style={{ color }}>{value}</div>
+      <div className="text-[13px] text-muted">{sub}</div>
     </div>
   );
 }
 
 export default function DashboardPage() {
-  const user = useMe();
-  const { t, name, num } = useI18n();
-  const q = useQuery({ queryKey: ["dashboard"], queryFn: () => api<Dashboard>("/statistics/dashboard") });
+  const { t, name, num, date } = useI18n();
+  const seasons = useSeasons();
+  const [seasonId, setSeasonId] = useState("");
+  const q = useQuery({
+    queryKey: ["dashboard", seasonId],
+    queryFn: () => api<Dashboard>("/statistics/dashboard", { query: { seasonId } }),
+    placeholderData: (p) => p,
+  });
+  const recent = useQuery({
+    queryKey: ["beneficiaries", "recent", seasonId],
+    queryFn: () => api<PageResponse<BeneficiarySummary>>("/beneficiaries", { query: { seasonId, size: 5, sort: "registrationDate,desc" } }),
+    placeholderData: (p) => p,
+  });
+  const current = seasonId || String(q.data?.season?.id ?? "");
+  const sub = (c: Cell) => `${t("dashboard.males", { n: num(c.male) })} · ${t("dashboard.females", { n: num(c.female) })}`;
 
   return (
     <>
       <PageHeader
         title={t("dashboard.title")}
-        subtitle={<>{t("dashboard.welcome", { name: user.fullName })}{q.data?.season && <> · {t("dashboard.season", { season: q.data.season.label })}</>}</>}
+        subtitle={<>{t("dashboard.sub")}{q.data?.season && <> · {q.data.season.label}</>}</>}
+        actions={(
+          <label className="flex items-center gap-2.5 text-sm font-medium">
+            <span>{t("dashboard.seasonSelect")}</span>
+            <Select className="!w-auto" value={current} onChange={(e) => setSeasonId(e.target.value)}>
+              {seasons.data?.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+            </Select>
+          </label>
+        )}
       />
       {q.isPending && <Spinner />}
       {q.isError && <ErrorState error={q.error} />}
       {q.data && (() => {
         const d = q.data;
         const empty = d.totals.registered.total === 0;
-        const maxF = Math.max(0, ...d.byFiliere.map((f) => f.registered));
-        const maxC = Math.max(0, ...d.byCategory.map((c) => c.registered));
-        const todoTotal = d.todo.graduatesWithoutDiploma + d.todo.examsWithoutExamNumber + d.todo.departedWithoutReason;
+        const maxF = Math.max(1, ...d.byFiliere.map((f) => f.registered));
+        const totalReg = d.totals.registered.total;
+        const cats = CATEGORY_ORDER.map((c) => ({ category: c, n: d.byCategory.find((x) => x.category === c)?.registered ?? 0 }));
+        const todo = [
+          { n: d.todo.examsWithoutExamNumber, text: t("dashboard.todoText.exam") },
+          { n: d.todo.graduatesWithoutDiploma, text: t("dashboard.todoText.diploma") },
+          { n: d.todo.departedWithoutReason, text: t("dashboard.todoText.reason") },
+        ].filter((x) => x.n > 0);
         return (
           <div className="space-y-6">
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <Stat label={t("dashboard.registered")} cell={d.totals.registered} />
-              <Stat label={t("dashboard.inProgress")} value={d.inProgress} />
-              <Stat label={t("dashboard.graduates")} cell={d.totals.graduates} />
-              <Stat label={t("dashboard.departed")} cell={d.totals.departed} />
+              <Kpi label={t("dashboard.registered")} value={num(d.totals.registered.total)} sub={sub(d.totals.registered)} color="#0f5c5a" />
+              <Kpi label={t("dashboard.departed")} value={num(d.totals.departed.total)} sub={sub(d.totals.departed)} color="#7a4e00" />
+              <Kpi label={t("dashboard.graduates")} value={num(d.totals.graduates.total)} sub={sub(d.totals.graduates)} color="#1c6b3a" />
+              <Kpi label={t("dashboard.passRate")} value={d.totals.passRatePercent == null ? "—" : `${num(d.totals.passRatePercent, 1)}%`}
+                sub={t("dashboard.passRate.note")} color="#14232b" />
             </div>
 
-            <Card>
-              <div className="flex flex-wrap items-end justify-between gap-4">
-                <div>
-                  <div className="text-sm text-muted">{t("dashboard.passRate")}</div>
-                  <div className="text-4xl font-bold text-brand-700">
-                    {d.totals.passRatePercent == null ? "—" : `${num(d.totals.passRatePercent, 1)}%`}
-                  </div>
-                  <p className="mt-1 text-xs text-muted">{t("dashboard.passRate.note")}</p>
-                </div>
-                <div className="flex gap-6 text-sm text-muted">
-                  <span>{t("dashboard.failed")}: <b className="text-ink">{num(d.totals.failed.total)}</b></span>
-                  <span>{t("dashboard.absent")}: <b className="text-ink">{num(d.totals.absent.total)}</b></span>
-                </div>
-              </div>
-            </Card>
-
             {empty ? <Card><p className="text-center text-muted">{t("dashboard.noData")}</p></Card> : (
-              <div className="grid gap-6 lg:grid-cols-2">
-                <Card title={t("dashboard.byFiliere")}>
-                  <div className="space-y-3">
-                    {d.byFiliere.map((f) => (
-                      <div key={f.id} className="space-y-1">
-                        <Bar label={name(f)} value={f.registered} max={maxF} />
-                        <Bar label={t("dashboard.graduates")} value={f.graduates} max={maxF} tone="bg-accent" />
-                      </div>
-                    ))}
+              <div className="grid gap-4 lg:grid-cols-5">
+                <section className="min-w-0 space-y-4 rounded-xl border border-line bg-white p-6 lg:col-span-3">
+                  <div className="flex flex-wrap justify-between gap-2">
+                    <h2 className="text-lg font-semibold">{t("dashboard.byFiliere")}</h2>
+                    <div className="flex gap-4 text-[13px] text-muted">
+                      <span className="flex items-center gap-1.5"><span className="size-3 rounded-sm bg-brand-600" />{t("dashboard.registered")}</span>
+                      <span className="flex items-center gap-1.5"><span className="size-3 rounded-sm bg-accent" />{t("dashboard.graduates")}</span>
+                    </div>
                   </div>
-                </Card>
-                <Card title={t("dashboard.byCategory")}>
-                  <div className="space-y-3">
-                    {d.byCategory.map((c) => <Bar key={c.category} label={t(`category.${c.category}`)} value={c.registered} max={maxC} />)}
+                  {d.byFiliere.map((f) => (
+                    <div key={f.id} className="space-y-1.5">
+                      <div className="text-sm font-medium">{name(f)}</div>
+                      {([["registered", "bg-brand-600"], ["graduates", "bg-accent"]] as const).map(([k, tone]) => (
+                        <div key={k} className="flex items-center gap-2.5">
+                          <div className={`h-4 rounded ${tone}`} style={{ width: `${(f[k] / maxF) * 100}%`, minWidth: f[k] > 0 ? 4 : 0 }} />
+                          <span className="text-[13px] font-semibold tabular-nums">{num(f[k])}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </section>
+
+                <section className="min-w-0 space-y-4 rounded-xl border border-line bg-white p-6 lg:col-span-2">
+                  <h2 className="text-lg font-semibold">{t("dashboard.byCategory")}</h2>
+                  <div className="flex h-[22px] overflow-hidden rounded-md bg-[#e3ebe9]">
+                    {cats.map((c) => <div key={c.category} className="h-full" style={{ background: CATEGORY_COLOR[c.category], width: `${totalReg > 0 ? (c.n / totalReg) * 100 : 0}%` }} />)}
                   </div>
-                </Card>
+                  {cats.map((c) => (
+                    <div key={c.category} className="flex items-center justify-between gap-2 border-b border-line pb-2.5 text-sm">
+                      <span className="flex items-center gap-2"><span className="size-3 rounded-sm" style={{ background: CATEGORY_COLOR[c.category] }} />{t(`category.${c.category}`)}</span>
+                      <strong>{num(c.n)}</strong>
+                    </div>
+                  ))}
+                  <p className="text-xs leading-relaxed text-muted">{t("dashboard.remainingNote")}</p>
+                </section>
               </div>
             )}
 
-            <Card title={t("dashboard.todo")}>
-              {todoTotal === 0 ? <p className="text-sm text-muted">{t("dashboard.todo.none")}</p> : (
-                <ul className="list-disc space-y-1 ps-5 text-sm">
-                  {d.todo.graduatesWithoutDiploma > 0 && <li>{t("dashboard.todo.noDiploma", { n: num(d.todo.graduatesWithoutDiploma) })}</li>}
-                  {d.todo.examsWithoutExamNumber > 0 && <li>{t("dashboard.todo.noExamNumber", { n: num(d.todo.examsWithoutExamNumber) })}</li>}
-                  {d.todo.departedWithoutReason > 0 && <li>{t("dashboard.todo.noReason", { n: num(d.todo.departedWithoutReason) })}</li>}
-                </ul>
-              )}
-            </Card>
+            <div className="grid gap-4 lg:grid-cols-5">
+              <section className="min-w-0 space-y-3.5 rounded-xl border border-line bg-white p-6 lg:col-span-3">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-lg font-semibold">{t("dashboard.recent")}</h2>
+                  <Link href="/beneficiaries" className="text-sm font-semibold text-brand-600 hover:underline">{t("dashboard.viewAll")}</Link>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-surface text-muted">
+                      <tr>{[t("ben.col.reg"), t("ben.col.name"), t("ben.col.center"), t("ben.col.filiere"), t("ben.field.regDate")].map((h) => (
+                        <th key={h} className="whitespace-nowrap px-3 py-3 text-start font-semibold">{h}</th>
+                      ))}</tr>
+                    </thead>
+                    <tbody>
+                      {recent.data?.content.map((r) => (
+                        <tr key={r.id} className="border-t border-line">
+                          <td className="ltr-field px-3 py-3 text-xs">{r.registrationNumber}</td>
+                          <td className="px-3 py-3"><Link href={`/beneficiaries/${r.id}`} className="hover:underline">{r.fullNameAr}</Link></td>
+                          <td className="px-3 py-3">{r.centerNameAr}</td>
+                          <td className="px-3 py-3">{r.filiereNameAr ?? "—"}</td>
+                          <td className="px-3 py-3 tabular-nums">{date(r.registrationDate)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <section className="min-w-0 space-y-3.5 rounded-xl border border-line bg-white p-6 lg:col-span-2">
+                <h2 className="text-lg font-semibold">{t("dashboard.todo")}</h2>
+                {todo.length === 0 ? <p className="text-sm text-muted">{t("dashboard.todo.none")}</p> : todo.map((x) => (
+                  <div key={x.text} className="flex items-center gap-3 rounded-lg bg-warn-50 p-3 text-sm leading-relaxed text-[#5e3d00]">
+                    <strong className="min-w-8 text-[22px]">{num(x.n)}</strong><span>{x.text}</span>
+                  </div>
+                ))}
+              </section>
+            </div>
           </div>
         );
       })()}

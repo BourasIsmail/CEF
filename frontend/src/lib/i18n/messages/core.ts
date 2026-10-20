@@ -6,6 +6,7 @@ const ar = {
   // --- application
   "app.name": "التكوين التأهيلي بمراكز التربية و التكوين - منصة التتبع",
   "app.short": "منصة التتبع",
+  "app.tagline": "التكوين التأهيلي بمراكز التربية و التكوين",
   "app.org": "التعاون الوطني",
   "lang.ar": "العربية",
   "lang.fr": "Français",
@@ -194,6 +195,7 @@ const ar = {
 const fr: Record<keyof typeof ar, string> = {
   "app.name": "Formation qualifiante dans les Centres d'Éducation et de Formation — Plateforme de suivi",
   "app.short": "Plateforme de suivi",
+  "app.tagline": "Formation qualifiante dans les Centres d'Éducation et de Formation",
   "app.org": "Entraide Nationale",
   "lang.ar": "العربية",
   "lang.fr": "Français",

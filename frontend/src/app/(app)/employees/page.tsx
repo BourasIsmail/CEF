@@ -6,9 +6,9 @@ import { FileSpreadsheet, Plus, Search } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge, PageHeader } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
-import { Checkbox, Input, Select } from "@/components/ui/form";
+import { Input, Select } from "@/components/ui/form";
 import { ErrorState } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
 import { api, download, type Query } from "@/lib/api";
@@ -16,11 +16,17 @@ import { useMe } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { can } from "@/lib/permissions";
 import { useCentersOptions, useFilieresOptions, useProvinces } from "@/lib/queries";
-import type { EmployeeSummary, PageResponse, StaffSummary } from "@/lib/types";
+import type { EmployeeSummary, PageResponse } from "@/lib/types";
 
 const PAGE_SIZE = 20;
 const TYPES = ["PEDAGOGICAL", "CENTER_DIRECTOR", "ADMINISTRATIVE", "GUEST_TRAINER", "PEDAGOGICAL_COORDINATOR"] as const;
-const STATUSES = ["ENTRAIDE_NATIONALE", "ASSOCIATION", "OTHER_SECTOR", "PROMOTION_NATIONALE", "FOREIGN_VOLUNTEER"] as const;
+const ACTIVITY_STYLE = {
+  ACTIVE: "bg-[#DFF1E5] text-[#1C6B3A]",
+  ON_LEAVE: "bg-[#FBF1DC] text-[#6B4300]",
+  SECONDED: "bg-[#E4EEF9] text-[#1B4A7F]",
+  SUSPENDED: "bg-[#F9E4E1] text-[#A4332B]",
+  RETIRED: "bg-[#EEF3F2] text-[#3C4D55]",
+} as const;
 const ACTIVITIES = ["ACTIVE", "ON_LEAVE", "SECONDED", "SUSPENDED", "RETIRED"] as const;
 
 export default function EmployeesPage() {
@@ -48,7 +54,7 @@ export default function EmployeesPage() {
   const provinces = useProvinces();
   const centers = useCentersOptions(provinceId ? Number(provinceId) : undefined);
   const filieres = useFilieresOptions();
-  const summary = useQuery({ queryKey: ["employees", "summary", provinceId, centerId], queryFn: () => api<StaffSummary>("/employees/summary", { query: { provinceId, centerId } }) });
+  const showProvince = me.role === "ADMIN" || me.role === "REGIONAL";
 
   const query: Query = {
     search: q, provinceId, centerId, filiereId, type, activityStatus: activity, page, size: PAGE_SIZE,
@@ -74,10 +80,7 @@ export default function EmployeesPage() {
     {
       id: "type", header: t("hr.col.position"),
       cell: ({ row }) => (
-        <div>
-          <div>{row.original.enGrade ?? label("EmployeeType", row.original.employeeType)}</div>
-          <div className="text-xs text-muted">{label("AdministrativeStatus", row.original.administrativeStatus)}</div>
-        </div>
+        [row.original.enGrade ?? label("EmployeeType", row.original.employeeType), row.original.enScale ? t("hr.scale", { n: row.original.enScale }) : null].filter(Boolean).join("، ")
       ),
     },
     { id: "center", header: t("hr.col.assignment"), cell: ({ row }) => row.original.centerNameAr ?? <span className="text-muted">{t("hr.provincial")}</span> },
@@ -86,7 +89,7 @@ export default function EmployeesPage() {
       cell: ({ row }) => (locale === "fr" ? row.original.teachingFilieresFr ?? row.original.teachingFilieresAr : row.original.teachingFilieresAr) ?? "—",
     },
     { id: "hireDate", header: t("hr.col.hire"), cell: ({ row }) => (row.original.hireDate ? date(row.original.hireDate) : "—") },
-    { id: "activityStatus", header: t("hr.col.activity"), cell: ({ row }) => <Badge tone={row.original.activityStatus === "ACTIVE" ? "ok" : "warn"}>{label("ActivityStatus", row.original.activityStatus)}</Badge> },
+    { id: "activityStatus", header: t("hr.col.activity"), cell: ({ row }) => <span className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${ACTIVITY_STYLE[row.original.activityStatus]}`}>{label("ActivityStatus", row.original.activityStatus)}</span> },
     {
       id: "edit", header: "", enableSorting: false,
       cell: ({ row }) => can.write(me) ? (
@@ -111,27 +114,11 @@ export default function EmployeesPage() {
 
   return (
     <>
-      <PageHeader title={t("hr.title")} subtitle={t("hr.subtitle")}
+      <PageHeader title={t("hr.title")} subtitle={list.data ? t("hr.subtitle.n", { n: num(list.data.totalElements) }) : t("hr.subtitle")}
         actions={<>
           <Button variant="secondary" icon={<FileSpreadsheet className="size-4" />} loading={exporting} onClick={exportXlsx}>{t("centers.export")}</Button>
           {can.write(me) && <Button icon={<Plus className="size-4" />} onClick={() => router.push("/employees/new")}>{t("hr.new")}</Button>}
         </>} />
-
-      {summary.data && (
-        <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-line bg-white p-4">
-            <div className="text-sm text-muted">{t("hr.summary.total")}</div>
-            <div className="text-2xl font-bold text-brand-700">{num(summary.data.total)}</div>
-            <div className="text-xs text-muted">{t("hr.summary.males")} {num(summary.data.male)} · {t("hr.summary.females")} {num(summary.data.female)}</div>
-          </div>
-          {(["PEDAGOGICAL", "GUEST_TRAINER", "CENTER_DIRECTOR"] as const).map((k) => (
-            <div key={k} className="rounded-xl border border-line bg-white p-4">
-              <div className="text-sm text-muted">{label("EmployeeType", k)}</div>
-              <div className="text-2xl font-bold text-brand-700">{num(summary.data.byType[k] ?? 0)}</div>
-            </div>
-          ))}
-        </div>
-      )}
 
       <div className="mb-4 space-y-3 rounded-xl border border-line bg-white p-4">
         <div className="relative">
@@ -139,28 +126,29 @@ export default function EmployeesPage() {
           <Input className="ps-9" placeholder={t("hr.search")} value={search} onChange={(e) => setSearch(e.target.value)} aria-label={t("common.search")} />
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {showProvince && (
+            <Select value={provinceId} onChange={(e) => { setProvinceId(e.target.value); setCenterId(""); setPage(0); }} aria-label={t("hr.filter.province")}>
+              <option value="">{t("hr.filter.province")} — {t("common.all")}</option>
+              {provinces.data?.map((p) => <option key={p.id} value={p.id}>{name(p)}</option>)}
+            </Select>
+          )}
           <Select value={centerId} onChange={reset(setCenterId)} aria-label={t("hr.filter.center")}>
             <option value="">{t("hr.filter.center")} — {t("common.all")}</option>
             {centers.data?.map((c) => <option key={c.id} value={c.id}>{name(c)}</option>)}
           </Select>
+          <Select value={type} onChange={reset(setType)} aria-label={t("hr.filter.job")}>
+            <option value="">{t("hr.filter.job")} — {t("common.all")}</option>
+            {TYPES.map((x) => <option key={x} value={x}>{label("EmployeeType", x)}</option>)}
+          </Select>
           <Select value={filiereId} onChange={reset(setFiliereId)} aria-label={t("hr.filter.filiere")}>
             <option value="">{t("hr.filter.filiere")} — {t("common.all")}</option>
             {filieres.data?.map((f) => <option key={f.id} value={f.id}>{name(f)}</option>)}
-          </Select>
-          <Select value={type} onChange={reset(setType)} aria-label={t("hr.filter.type")}>
-            <option value="">{t("hr.filter.type")} — {t("common.all")}</option>
-            {TYPES.map((x) => <option key={x} value={x}>{label("EmployeeType", x)}</option>)}
-          </Select>
-          <Select value={status} onChange={reset(setStatus)} aria-label={t("hr.filter.status")}>
-            <option value="">{t("hr.filter.status")} — {t("common.all")}</option>
-            {STATUSES.map((x) => <option key={x} value={x}>{label("AdministrativeStatus", x)}</option>)}
           </Select>
           <Select value={activity} onChange={reset(setActivity)} aria-label={t("hr.filter.activity")}>
             <option value="">{t("hr.filter.activity")} — {t("common.all")}</option>
             {ACTIVITIES.map((x) => <option key={x} value={x}>{label("ActivityStatus", x)}</option>)}
           </Select>
         </div>
-        <Checkbox label={t("hr.filter.withoutCenter")} checked={without} onChange={(e) => { setWithout(e.target.checked); setPage(0); }} />
       </div>
 
       {list.isError ? <ErrorState error={list.error} /> : (
