@@ -159,6 +159,9 @@ class UserApiIT extends AbstractApiIT {
     void safeguardsAgainstLockingEveryoneOut() throws Exception {
         var me = realAdmin("boss.one");
         long meId = userId("boss.one");
+        // acteur distinct de boss.one même si l'auto-incrément a donné l'id 1 à ce dernier
+        var root = org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(
+                new ma.entraidenationale.cef.security.AppUserPrincipal(999_999L, "root", ma.entraidenationale.cef.security.AppRole.ADMIN, null, null, null));
         // pas d'auto-désactivation, pas de changement de son propre profil
         mvc.perform(put("/api/users/" + meId + "/enabled").with(me).contentType(APPLICATION_JSON).content("{\"enabled\": false}"))
                 .andExpect(status().isUnprocessableContent()).andExpect(jsonPath("$.code").value("user.self_disable"));
@@ -171,9 +174,9 @@ class UserApiIT extends AbstractApiIT {
         long otherAdmin = userId("boss.two");
         mvc.perform(put("/api/users/" + otherAdmin + "/enabled").with(me).contentType(APPLICATION_JSON).content("{\"enabled\": false}"))
                 .andExpect(status().isOk());                                    // boss.one reste actif
-        mvc.perform(put("/api/users/" + meId + "/enabled").with(admin()).contentType(APPLICATION_JSON).content("{\"enabled\": false}"))
+        mvc.perform(put("/api/users/" + meId + "/enabled").with(root).contentType(APPLICATION_JSON).content("{\"enabled\": false}"))
                 .andExpect(status().isUnprocessableContent()).andExpect(jsonPath("$.code").value("user.last_admin"));
-        mvc.perform(put("/api/users/" + meId).with(admin()).contentType(APPLICATION_JSON)
+        mvc.perform(put("/api/users/" + meId).with(root).contentType(APPLICATION_JSON)
                 .content("{\"fullName\": \"Boss\", \"role\": \"REGIONAL\", \"regionId\": %d}".formatted(regionId("06"))))
                 .andExpect(status().isUnprocessableContent()).andExpect(jsonPath("$.code").value("user.last_admin"));
     }
