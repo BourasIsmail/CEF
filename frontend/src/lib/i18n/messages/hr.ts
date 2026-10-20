@@ -49,7 +49,7 @@ const ar = {
   "hr.field.education": "المستوى الدراسي",
   "hr.field.diploma": "الشهادة المحصل عليها",
   "hr.field.specialty": "التخصص",
-  "hr.field.diplomaDate": "تاريخ الحصول عليها",
+  "hr.field.diplomaDate": "تاريخ الحصول على الشهادة",
   "hr.field.experience": "التجربة العملية في مجال التربية والتكوين",
   "hr.field.otherQualifications": "مؤهلات وكفاءات أخرى",
   "hr.field.grade": "الإطار",
