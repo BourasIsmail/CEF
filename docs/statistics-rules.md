@@ -35,25 +35,27 @@ Conséquence : **Reste = total de la filière − (Migrants + Handicap + Autre)*
 Un bénéficiaire en rattrapage reste `ENROLLED` : il n'est ni diplômé, ni recalé, ni absent tant que la session
 de rattrapage n'a pas eu lieu.
 
-## Implémentation (étape « statistiques »)
+## Implémentation
 
-Une seule requête d'agrégation, sans boucle en mémoire :
+`StatisticsService` (package `statistics`) :
 
-```sql
-SELECT r.id, p.id, f.id, b.stat_category,
-       SUM(b.gender = 'M')                              AS registered_m,
-       SUM(b.gender = 'F')                              AS registered_f,
-       SUM(e.status = 'DEPARTED' AND b.gender = 'M')    AS departed_m,
-       -- … idem F, GRADUATED, FAILED, ABSENT
-FROM enrollment e
-JOIN beneficiary b ON b.id = e.beneficiary_id
-JOIN center c ON c.id = e.center_id
-JOIN provincial_directorate p ON p.id = c.provincial_directorate_id
-JOIN regional_directorate r ON r.id = p.regional_directorate_id
-JOIN filiere f ON f.id = e.filiere_id
-WHERE e.season_id = :season          -- + filtres région / province / centre / filière + périmètre de l'utilisateur
-GROUP BY r.id, p.id, f.id, b.stat_category WITH ROLLUP;
-```
+1. une requête de **squelette** liste les filières proposées dans chaque province (pour afficher aussi les lignes à zéro) ;
+2. **une seule requête d'agrégation** (`SUM(CASE …)` groupée par province, filière et catégorie, jointure
+   inscription ⋈ bénéficiaire ⋈ centre ⋈ province) fournit tous les compteurs garçons / filles ;
+3. le code Java assemble les lignes déjà agrégées et additionne les sous-totaux (filière, province, région, général).
 
-Index utilisé : `idx_enrollment_stats (season_id, filiere_id, center_id, status)`.
-Les lignes de catégorie sans bénéficiaire (compteurs à 0) sont complétées par un `CROSS JOIN` avec la liste des 4 catégories.
+Le périmètre de l'utilisateur (`ScopeSql`) est appliqué **avant** les filtres : un provincial ne peut pas élargir sa vue
+en passant un autre `provinceId` / `centerId`. Index utile : `idx_enrollment_stats (season_id, filiere_id, center_id, status)`.
+
+Les **absents** forment un groupe de colonnes à part (« الغائبين ») ; le pourcentage de réussite les ignore.
+
+## Exports
+
+- **Excel** (`/api/statistics/report.xlsx`) : feuille de droite à gauche en arabe (`lang=fr` : gauche à droite),
+  en-têtes fusionnés sur 2 lignes, cellules région / province / filière fusionnées, totaux par province et par région
+  (et général si plusieurs régions), pourcentage stocké en nombre (format `0.0%`), note de calcul en pied de tableau,
+  mise en page A4 paysage.
+- **PDF** (`/api/statistics/report.pdf`) : même tableau, A4 paysage, police **Noto Naskh Arabic** embarquée
+  (licence SIL OFL, `resources/fonts`) ; l'en-tête est répété à chaque page.
+  Note technique : les tableaux RTL d'OpenPDF échouent avec des cellules fusionnées ; le tableau est donc construit de
+  gauche à droite avec les colonnes émises en ordre inverse, le texte restant en sens RTL.

@@ -160,3 +160,24 @@ Un diplôme émis verrouille le résultat (409 `exam.diploma_issued`) jusqu'à s
 Chaque création / modification / suppression de fiche, inscription, session d'examen et diplôme est tracée (qui, quand,
 IP, différences champ par champ `{champ: {old, new}}`), dans la transaction de l'opération. Une modification sans
 changement ne laisse pas de trace. L'historique est rattaché à la fiche du bénéficiaire.
+
+---
+
+# API — statistiques
+
+Tous les profils (chacun dans son périmètre ; un compte régional / provincial ne voit que sa région / province).
+
+| Méthode | Chemin | Description |
+|---|---|---|
+| GET | `/statistics/report` | tableau hiérarchique région → province → filière → catégorie, totaux à chaque niveau |
+| GET | `/statistics/report.xlsx` | export Excel (mise en page officielle, RTL) |
+| GET | `/statistics/report.pdf` | export PDF (A4 paysage, police arabe embarquée) |
+| GET | `/statistics/dashboard` | indicateurs du tableau de bord : totaux, en cours, par filière, par catégorie, dossiers à compléter |
+
+Paramètres communs : `seasonId` (défaut : saison courante), `regionId`, `provinceId`, `centerId`, `filiereId` ;
+exports : `lang=ar` (défaut) ou `fr`.
+
+Chaque ligne contient `registered`, `departed`, `graduates`, `failed`, `absent` (chacun `{male, female, total}`) et
+`passRatePercent` (diplômés ÷ (diplômés + recalés), 1 décimale, `null` si aucun). Les catégories sont toujours
+`MIGRANT`, `DISABLED`, `OTHER` (avec `specification` : les précisions saisies), `REMAINING`. Règles complètes :
+[statistics-rules.md](statistics-rules.md).
