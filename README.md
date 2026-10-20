@@ -6,7 +6,7 @@ gestion des centres et des ressources humaines, statistiques officielles.
 | Dossier | Contenu | État |
 |---|---|---|
 | `backend/` | Java 21, Spring Boot 4.1, Flyway, MySQL 8 | schéma ✔ · organisation, filières, bénéficiaires, inscriptions, examens ✔ · statistiques (JSON, Excel, PDF) ✔ · ressources humaines ✔ · sécurité (JWT en cookies httpOnly, comptes) ✔ · demandes de filière à venir |
-| `frontend/` | Next.js (App Router), arabe RTL / français | connexion, comptes, mon compte, tableau de bord ✔ · autres écrans en cours |
+| `frontend/` | Next.js (App Router), arabe RTL / français | tous les écrans ✔ (connexion, comptes, mon compte, tableau de bord, bénéficiaires, centres, RH, filières, demandes, statistiques) |
 | `docs/` | maquettes PDF, modèle de données, règles statistiques | ✔ |
 
 ## Démarrage (Docker)
@@ -64,6 +64,7 @@ Arabe (RTL) par défaut, français en un clic ; la langue est mémorisée dans l
 - [Modèle de données](docs/data-model.md)
 - [Règles du rapport statistique](docs/statistics-rules.md)
 - [API organisation / filières / modules](docs/api.md)
+- [Frontend](docs/frontend.md)
 - [Maquettes (PDF)](docs/CEF-Manager-maquettes.pdf)
 
 ## Sécurité
@@ -116,6 +117,7 @@ TEST_DB_USERNAME=cef TEST_DB_PASSWORD=... ./mvnw test
 - [Modèle de données](docs/data-model.md)
 - [Règles du rapport statistique](docs/statistics-rules.md)
 - [API organisation / filières / modules](docs/api.md)
+- [Frontend](docs/frontend.md)
 - [Maquettes (PDF)](docs/CEF-Manager-maquettes.pdf)
 
 ## Sécurité

@@ -186,3 +186,74 @@ export interface AuditEntry {
   action: "CREATE" | "UPDATE" | "DELETE"; username: string; occurredAt: string;
   changes: Record<string, { old?: unknown; new?: unknown }>;
 }
+
+// ---------------------------------------------------------------- ressources humaines
+
+export type EmployeeType = "PEDAGOGICAL" | "CENTER_DIRECTOR" | "ADMINISTRATIVE" | "GUEST_TRAINER" | "PEDAGOGICAL_COORDINATOR";
+export type AdministrativeStatus = "ENTRAIDE_NATIONALE" | "ASSOCIATION" | "OTHER_SECTOR" | "PROMOTION_NATIONALE" | "FOREIGN_VOLUNTEER";
+export type ActivityStatus = "ACTIVE" | "ON_LEAVE" | "SECONDED" | "SUSPENDED" | "RETIRED";
+
+export interface EmployeeSummary {
+  id: number; provincialDirectorateId: number; centerId?: number; centerNameAr?: string;
+  employeeType: EmployeeType; administrativeStatus: AdministrativeStatus;
+  fullNameAr: string; fullNameFr?: string; gender: Gender; phone?: string; rankNumber?: string; hireDate?: string; activityStatus: ActivityStatus;
+}
+
+export interface AssignmentView {
+  id: number; fromDate: string; toDate?: string; provincialDirectorateId: number; centerId?: number; centerNameAr?: string;
+  positionTitle?: string; decisionReference?: string;
+}
+export interface TeachingView { id: number; seasonId: number; seasonLabel: string; filiereId: number; filiereNameAr: string; moduleId?: number; moduleNameAr?: string }
+export interface GuestContractView {
+  id: number; seasonId: number; seasonLabel: string; filiereId: number; filiereNameAr: string; diplomaYear?: number; workStartDate?: string;
+  hourlyRateMad?: number; monthsPerYear?: number; hoursPerMonth?: number; beneficiariesCount?: number; estimatedAnnualCostMad?: number;
+}
+
+export interface EmployeeDetail {
+  id: number; provincialDirectorateId: number; provincialDirectorateNameAr: string; regionalDirectorateId: number;
+  centerId?: number; centerNameAr?: string; employeeType: EmployeeType; administrativeStatus: AdministrativeStatus;
+  otherSectorText?: string; delegatingBody?: string; fullNameAr: string; fullNameFr?: string; gender: Gender;
+  birthDate?: string; birthPlace?: string; idDocumentType?: string; idDocumentNumber?: string; address?: string; phone?: string; email?: string;
+  educationLevel?: string; diplomaTitle?: string; specialty?: string; diplomaDate?: string; experienceDescription?: string; otherQualifications?: string;
+  enGrade?: string; enScale?: string; rankNumber?: string; hireDate?: string; activityStatus: ActivityStatus;
+  assignments: AssignmentView[]; teachings: TeachingView[]; guestContracts: GuestContractView[];
+  createdAt: string; updatedAt: string; createdBy?: string; updatedBy?: string;
+}
+
+export interface StaffSummary {
+  total: number; male: number; female: number;
+  byType: Record<EmployeeType, number>; byAdministrativeStatus: Record<AdministrativeStatus, number>;
+}
+
+// ---------------------------------------------------------------- demandes de filière
+
+export type RequestType = "CREATE" | "MODIFY";
+export type RequestStatus = "DRAFT" | "SUBMITTED" | "RETURNED" | "REGIONAL_VALIDATED" | "APPROVED" | "REJECTED";
+
+export interface RequestSummary {
+  id: number; requestNumber: string; requestType: RequestType; status: RequestStatus; centerId: number; centerNameAr: string;
+  provinceId: number; provinceNameAr: string; regionId: number; proposedNameAr: string; targetFiliereId?: number;
+  submittedAt?: string; createdAt: string; updatedAt: string;
+}
+export interface RequestDocument { id: number; originalFilename: string; sizeBytes: number; sha256: string; uploadedAt: string; uploadedBy: string }
+export interface RequestDocumentSlot { typeCode: string; typeNameAr: string; position: number; mandatory: boolean; document?: RequestDocument }
+export interface RequestHistoryEntry { fromStatus?: RequestStatus; toStatus: RequestStatus; actor: string; comment?: string; occurredAt: string }
+export interface RequestDetail {
+  id: number; requestNumber: string; requestType: RequestType; status: RequestStatus; centerId: number; centerNameAr: string;
+  provinceId: number; provinceNameAr: string; regionId: number; associationId?: number; associationNameAr?: string;
+  targetFiliereId?: number; targetFiliereNameAr?: string; proposedNameAr: string; proposedNameFr?: string; durationMonths?: number;
+  expectedBeneficiaries?: number; modificationSummary?: string; submittedAt?: string;
+  regionalDecisionAt?: string; regionalComment?: string; nationalDecisionAt?: string; nationalComment?: string; resultingFiliereId?: number;
+  documents: RequestDocumentSlot[]; history: RequestHistoryEntry[]; availableActions: string[]; createdAt: string; updatedAt: string;
+}
+export interface RequestCounts { byStatus: Record<RequestStatus, number>; total: number }
+
+// ---------------------------------------------------------------- rapport statistique
+
+export interface CategoryRow { category: StatCategory; specification?: string; metrics: Metrics }
+export interface FiliereBlock { id: number; code: string; nameAr: string; nameFr: string; categories: CategoryRow[]; total: Metrics }
+export interface ProvinceBlock { id: number; code: string; nameAr: string; nameFr: string; filieres: FiliereBlock[]; total: Metrics }
+export interface RegionBlock { id: number; code: string; nameAr: string; nameFr: string; provinces: ProvinceBlock[]; total: Metrics }
+export interface StatisticsReport {
+  season?: { id: number; label: string }; regions: RegionBlock[]; grandTotal: Metrics; generatedAt: string;
+}

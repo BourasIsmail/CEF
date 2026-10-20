@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { BookOpen, Building2, GraduationCap, CalendarDays, LayoutDashboard, LogOut, Menu, UserRound, UsersRound, X, type LucideIcon } from "lucide-react";
+import { BarChart3, BookOpen, Briefcase, FileText, Building2, GraduationCap, CalendarDays, LayoutDashboard, LogOut, Menu, UserRound, UsersRound, X, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
@@ -17,7 +17,10 @@ const NAV: NavItem[] = [
   { href: "/", label: "nav.dashboard", icon: LayoutDashboard },
   { href: "/beneficiaries", label: "nav.beneficiaries", icon: GraduationCap },
   { href: "/centers", label: "nav.centers", icon: Building2 },
+  { href: "/employees", label: "nav.employees", icon: Briefcase },
   { href: "/filieres", label: "nav.filieres", icon: BookOpen },
+  { href: "/requests", label: "nav.requests", icon: FileText },
+  { href: "/statistics", label: "nav.statistics", icon: BarChart3 },
   { href: "/seasons", label: "nav.seasons", icon: CalendarDays, show: can.admin },
   { href: "/users", label: "nav.users", icon: UsersRound, show: can.manageUsers },
 ];
