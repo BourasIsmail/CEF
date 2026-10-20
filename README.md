@@ -5,7 +5,7 @@ gestion des centres et des ressources humaines, statistiques officielles.
 
 | Dossier | Contenu | État |
 |---|---|---|
-| `backend/` | Java 21, Spring Boot 4.1, Flyway, MySQL 8 | schéma ✔ · organisation, filières, bénéficiaires, inscriptions, examens ✔ · statistiques (JSON, Excel, PDF) ✔ · RH, sécurité JWT à venir |
+| `backend/` | Java 21, Spring Boot 4.1, Flyway, MySQL 8 | schéma ✔ · organisation, filières, bénéficiaires, inscriptions, examens ✔ · statistiques (JSON, Excel, PDF) ✔ · ressources humaines ✔ · sécurité JWT à venir |
 | `frontend/` | Next.js (App Router), arabe RTL / français | à venir (Dockerfile prêt) |
 | `docs/` | maquettes PDF, modèle de données, règles statistiques | ✔ |
 

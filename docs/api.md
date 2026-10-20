@@ -181,3 +181,36 @@ Chaque ligne contient `registered`, `departed`, `graduates`, `failed`, `absent` 
 `passRatePercent` (diplômés ÷ (diplômés + recalés), 1 décimale, `null` si aucun). Les catégories sont toujours
 `MIGRANT`, `DISABLED`, `OTHER` (avec `specification` : les précisions saisies), `REMAINING`. Règles complètes :
 [statistics-rules.md](statistics-rules.md).
+
+---
+
+# API — ressources humaines
+
+Lecture dans le périmètre (un agent hors périmètre ⇒ 404) ; écriture `ADMIN` et `PROVINCIAL` de la province de l'agent
+(`REGIONAL` : lecture seule). Un cadre sans centre (coordonnateur pédagogique, administratif provincial) reste visible
+de sa province et de sa région.
+
+| Méthode | Chemin | Description |
+|---|---|---|
+| GET | `/employees` | liste paginée : `search` (nom, n° d'ordre, pièce d'identité, téléphone), `regionId`, `provinceId`, `centerId`, `type`, `administrativeStatus`, `activityStatus`, `gender`, `withoutCenter` ; tris `nameAr`, `nameFr`, `type`, `administrativeStatus`, `center`, `rankNumber`, `hireDate`, `activityStatus` |
+| GET | `/employees/summary` | effectifs calculés (hors retraités) : total, sexe, par صفة, par وضعية إدارية ; filtres région / province / centre |
+| GET/POST | `/employees`, `/employees/{id}` (GET, PUT, DELETE) | fiche complète avec affectations, enseignement et prestations |
+| GET | `/employees/{id}/history` | journal d'audit de la fiche et de ses éléments |
+| POST | `/employees/{id}/transfers` | mutation : clôt l'affectation en cours la veille de `fromDate`, en ouvre une nouvelle |
+| POST/DELETE | `/employees/{id}/teachings[/{tid}]` | هيئة التكوين : filière entière ou un module, par saison |
+| POST/PUT/DELETE | `/employees/{id}/guest-contracts[/{cid}]` | prestation d'un formateur invité (tarif horaire, mois, heures…) |
+
+Règles :
+- **صفة** : le centre est obligatoire pour cadre pédagogique, directeur et formateur invité ; interdit pour le
+  coordonnateur pédagogique ; facultatif pour l'administratif (alors la province est celle du compte provincial, ou
+  `provincialDirectorateId` pour l'administrateur). Direction provinciale non modifiable.
+- **الوضعية إدارية** : `OTHER_SECTOR` ⇒ `otherSectorText` obligatoire ; `FOREIGN_VOLUNTEER` ⇒ `delegatingBody` obligatoire ;
+  `ENTRAIDE_NATIONALE` ⇒ numéro d'ordre (الرقم الترتيبي) obligatoire et unique, avec cadre et échelle ; ces trois champs
+  sont ignorés pour les autres statuts.
+- **Centre** : se change uniquement par mutation (`422 employee.use_transfer` sur un PUT), dans la même province, avec
+  historique contigu des affectations (la première affectation est ouverte à la création, à la date d'embauche).
+- **Enseignement** : cadres pédagogiques et formateurs invités seulement ; la filière doit être proposée par le centre ;
+  un module doit appartenir à la filière ; on ne cumule pas « toute la filière » et des modules de la même filière.
+- **Prestations** : réservées au formateur invité, une par saison et filière ; `estimatedAnnualCostMad` = tarif horaire
+  × heures par mois × mois par an.
+- Suppression d'un agent : ses affectations, enseignements et prestations partent avec lui ; tout est tracé dans l'audit.
