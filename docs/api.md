@@ -214,3 +214,42 @@ Règles :
 - **Prestations** : réservées au formateur invité, une par saison et filière ; `estimatedAnnualCostMad` = tarif horaire
   × heures par mois × mois par an.
 - Suppression d'un agent : ses affectations, enseignements et prestations partent avec lui ; tout est tracé dans l'audit.
+
+---
+
+# API — authentification et comptes
+
+Les jetons ne circulent que dans des cookies httpOnly ; toutes les routes hors `/api/auth/{csrf,login,refresh,logout}`
+et `/actuator/health` exigent un cookie d'accès valide (sinon 401).
+
+| Méthode | Chemin | Description |
+|---|---|---|
+| GET | `/auth/csrf` | public ; pose le cookie `XSRF-TOKEN` (à renvoyer dans `X-XSRF-TOKEN` sur toute écriture) |
+| POST | `/auth/login` | `{username, password}` → pose `cef_access` (15 min) et `cef_refresh` (7 j, `Path=/api/auth`), renvoie le profil |
+| POST | `/auth/refresh` | échange le cookie `cef_refresh` contre un nouveau couple de cookies (rotation) |
+| POST | `/auth/logout` | révoque le jeton de rafraîchissement et efface les cookies (idempotent) |
+| GET | `/auth/me` | profil de l'utilisateur connecté : profil, région / province, langue préférée |
+| PUT | `/auth/me/locale` | `{preferredLocale: "ar"|"fr"}` |
+| PUT | `/auth/password` | `{currentPassword, newPassword}` ; révoque les autres sessions et en ouvre une nouvelle |
+
+Erreurs 401 (`code`) : `auth.invalid_credentials` (identifiant inconnu, mot de passe faux, compte désactivé ou verrouillé :
+même réponse), `auth.no_refresh_token`, `auth.invalid_refresh_token`, `auth.wrong_password`.
+
+Mot de passe : 12 à 64 caractères, au moins une lettre et un chiffre, sans l'identifiant (422 `password.weak`).
+
+**Comptes** (`ADMIN` uniquement) :
+
+| Méthode | Chemin | Description |
+|---|---|---|
+| GET | `/users` | liste paginée : `search`, `role`, `enabled` |
+| GET/POST | `/users`, `/users/{id}` | consultation / création |
+| PUT | `/users/{id}` | nom, e-mail, profil, portée, langue |
+| PUT | `/users/{id}/enabled` | `{enabled}` : activer / désactiver (pas de suppression, pour garder l'auteur dans l'audit) |
+| PUT | `/users/{id}/password` | réinitialisation par l'administrateur |
+
+Profils ouverts : `ADMIN` (aucune portée), `REGIONAL` (+ `regionId`), `PROVINCIAL` (+ `provinceId`, la région en est déduite).
+Les autres profils sont refusés (422 `user.role_not_available`). Garde-fous : on ne peut pas désactiver son propre
+compte ni changer son propre profil, et le dernier administrateur actif ne peut être ni désactivé ni rétrogradé.
+Changer le profil ou la portée, désactiver ou réinitialiser le mot de passe révoque les sessions de l'utilisateur
+(un jeton d'accès déjà émis reste valable jusqu'à son expiration, 15 min au plus). Toutes ces opérations sont tracées
+dans l'audit, sans jamais y écrire de mot de passe ou de hash.

@@ -8,7 +8,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import ma.entraidenationale.cef.auth.JwtCookieFilter;
+import ma.entraidenationale.cef.auth.TokenService;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -22,9 +27,10 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
- * Configuration de sécurité PROVISOIRE (étape infrastructure) : tout est refusé sauf les sondes
- * de santé. L'authentification JWT (cookies httpOnly), les rôles ADMIN / REGIONAL / PROVINCIAL et
- * le filtrage par périmètre sont ajoutés à l'étape « sécurité ».
+ * Sécurité : API sans session, authentifiée par le cookie httpOnly {@code cef_access} (JWT, voir le package
+ * {@code auth}), protégée contre le CSRF par cookie + en-tête, CORS restreint aux origines configurées.
+ * Seuls les sondes de santé et les routes de connexion sont publiques ; les droits fins sont portés par
+ * {@code @PreAuthorize} (profil) et par le périmètre appliqué dans les services (région / province / centre).
  */
 @Configuration
 @EnableWebSecurity
@@ -32,8 +38,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 class SecurityConfig {
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, TokenService tokens) throws Exception {
         http
+                .addFilterBefore(new JwtCookieFilter(tokens), UsernamePasswordAuthenticationFilter.class)
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(new SpaCsrfSupport.SpaCsrfTokenRequestHandler()))
@@ -43,6 +50,8 @@ class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/csrf").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/refresh", "/api/auth/logout").permitAll()
                         .anyRequest().authenticated());
         return http.build();
     }
@@ -60,6 +69,12 @@ class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
+    }
+
+    /** Hash bcrypt (préfixe {bcrypt}, ré-évolutif : un autre algorithme pourra coexister plus tard). */
+    @Bean
+    PasswordEncoder passwordEncoder() {
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
     /** Aucun utilisateur en mémoire : évite le mot de passe généré par défaut au démarrage. */

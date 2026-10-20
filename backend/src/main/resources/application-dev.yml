@@ -3,6 +3,10 @@ spring:
   flyway:
     locations: classpath:db/migration,classpath:db/seed-dev
 
+cef:
+  security:
+    cookie-secure: ${COOKIE_SECURE:false}   # développement local en HTTP
+
 springdoc:
   api-docs:
     enabled: true

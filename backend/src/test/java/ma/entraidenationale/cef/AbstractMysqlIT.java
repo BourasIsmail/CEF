@@ -35,6 +35,7 @@ public abstract class AbstractMysqlIT {
 
     @DynamicPropertySource
     static void datasource(DynamicPropertyRegistry registry) {
+        registry.add("cef.security.jwt-secret", () -> "test-only-jwt-secret-0123456789-abcdefghijklmnop");
         if (MYSQL != null) {
             registry.add("spring.datasource.url", MYSQL::getJdbcUrl);
             registry.add("spring.datasource.username", MYSQL::getUsername);

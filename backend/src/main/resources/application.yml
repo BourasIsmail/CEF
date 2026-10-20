@@ -53,3 +53,13 @@ cef:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   storage:
     dir: ${FILE_STORAGE_DIR:./data/uploads}
+  security:
+    jwt-secret: ${JWT_SECRET}                      # obligatoire, 32 octets minimum (openssl rand -base64 48)
+    access-token-ttl: ${ACCESS_TOKEN_TTL:PT15M}
+    refresh-token-ttl: ${REFRESH_TOKEN_TTL:P7D}
+    cookie-secure: ${COOKIE_SECURE:true}           # false uniquement en développement local en HTTP
+    cookie-same-site: ${COOKIE_SAME_SITE:Lax}
+    max-failed-attempts: 5
+    lock-duration: PT15M
+    bootstrap-admin-username: ${BOOTSTRAP_ADMIN_USERNAME:}
+    bootstrap-admin-password: ${BOOTSTRAP_ADMIN_PASSWORD:}
