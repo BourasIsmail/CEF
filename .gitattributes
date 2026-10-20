@@ -1,0 +1,11 @@
+# Fins de ligne : LF partout (les scripts shell échouent avec CRLF dans les conteneurs Linux,
+# erreur « ./mvnw: not found »), sauf les scripts Windows.
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.png binary
+*.jpg binary
+*.pdf binary
+*.ttf binary
+*.woff2 binary
+*.jar binary

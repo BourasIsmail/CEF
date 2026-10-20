@@ -7,7 +7,8 @@ WORKDIR /workspace
 # Dépendances d'abord : cette couche n'est reconstruite que si pom.xml change
 COPY mvnw pom.xml ./
 COPY .mvn .mvn
-RUN chmod +x mvnw && ./mvnw -B -q dependency:go-offline
+# sed : tolère un mvnw extrait avec des fins de ligne Windows (CRLF)
+RUN sed -i 's/\r$//' mvnw && chmod +x mvnw && ./mvnw -B -q dependency:go-offline
 
 COPY src src
 RUN ./mvnw -B -q -DskipTests package && cp target/*.jar /workspace/app.jar
