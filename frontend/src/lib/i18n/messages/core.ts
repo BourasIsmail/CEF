@@ -65,6 +65,7 @@ const ar = {
 
   // --- connexion
   "login.title": "تسجيل الدخول",
+  "login.heroAlt": "مراكز التربية والتكوين: تكوينات في الطبخ والميكانيك والكهرباء والخياطة والإعلاميات",
   "login.intro": "أدخل بيانات حسابك للولوج إلى نظام تدبير المستفيدين والموارد البشرية والإحصائيات.",
   "login.remember": "البقاء متصلا على هذا الجهاز",
   "login.email": "البريد الإلكتروني",
@@ -250,6 +251,7 @@ const fr: Record<keyof typeof ar, string> = {
   "common.hide": "Masquer",
 
   "login.title": "Connexion",
+  "login.heroAlt": "Centres d'éducation et de formation : cuisine, mécanique, électricité, couture et informatique",
   "login.intro": "Saisissez vos identifiants pour accéder au système de gestion des bénéficiaires, des ressources humaines et des statistiques.",
   "login.remember": "Rester connecté sur cet appareil",
   "login.email": "E-mail",

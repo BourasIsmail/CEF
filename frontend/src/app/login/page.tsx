@@ -60,26 +60,10 @@ function LoginForm() {
 
 export default function LoginPage() {
   const t = useT();
-  const points = [1, 2, 3] as const;
   return (
     <div className="grid min-h-screen lg:grid-cols-[1fr_1.1fr]">
-      <aside className="hidden flex-col justify-between bg-brand-900 p-12 text-white lg:flex">
-        <div className="text-sm text-white/70">{t("app.org")}</div>
-        <div>
-          <h2 className="max-w-md text-3xl font-bold leading-snug">{t("login.headline")}</h2>
-          <ol className="mt-10 space-y-6">
-            {points.map((n) => (
-              <li key={n} className="flex gap-4">
-                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-accent font-bold text-brand-900">{n}</span>
-                <div>
-                  <div className="font-semibold">{t(`login.point${n}.title`)}</div>
-                  <p className="text-sm text-white/70">{t(`login.point${n}.text`)}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-        <p className="border-t border-white/15 pt-4 text-xs text-white/60">{t("login.footer")}</p>
+      <aside className="relative hidden overflow-hidden bg-brand-900 lg:block">
+        <Image src="/login-hero.webp" alt={t("login.heroAlt")} fill priority sizes="55vw" className="object-cover object-[50%_6%]" />
       </aside>
 
       <main className="flex flex-col justify-center px-6 py-10 sm:px-16">
