@@ -39,10 +39,10 @@ import ma.entraidenationale.cef.enrollment.domain.SessionType;
 @Component
 public class BulletinPdfExporter {
 
-    private static final Color BRAND = new Color(0x0F, 0x5C, 0x5A);
-    private static final Color SURFACE = new Color(0xF3, 0xF6, 0xF5);
-    private static final Color HIGHLIGHT = new Color(0xE3, 0xF0, 0xEE);
-    private static final Color BORDER = new Color(0x8A, 0xA3, 0xA0);
+    private static final Color BRAND = new Color(0x0C, 0x47, 0x97);
+    private static final Color SURFACE = new Color(0xF4, 0xF5, 0xF7);
+    private static final Color HIGHLIGHT = new Color(0xE6, 0xEE, 0xF9);
+    private static final Color BORDER = new Color(0x8A, 0x94, 0xA6);
 
     /** Libellés par langue. */
     private enum Labels {
@@ -194,7 +194,7 @@ public class BulletinPdfExporter {
     }
 
     private void pair(PdfPTable t, String label, String value, boolean numeric, Labels l, Fonts f) {
-        PdfPCell k = plain(label, f.normal(9, new Color(0x4F, 0x5F, 0x67)), l, start(l), 3);
+        PdfPCell k = plain(label, f.normal(9, new Color(0x50, 0x5A, 0x68)), l, start(l), 3);
         k.setBorder(Rectangle.BOTTOM);
         k.setBorderColor(BORDER);
         PdfPCell v = plain(value, f.bold(10), l, start(l), 3);

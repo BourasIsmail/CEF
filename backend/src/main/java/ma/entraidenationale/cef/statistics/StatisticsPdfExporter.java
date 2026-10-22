@@ -34,13 +34,13 @@ import ma.entraidenationale.cef.statistics.StatisticsDtos.Report;
 @Component
 class StatisticsPdfExporter {
 
-    private static final Color HEADER_BG = new Color(0x0F, 0x5C, 0x5A);
-    private static final Color GROUP_BG = new Color(0xF3, 0xF6, 0xF5);
-    private static final Color ALT_BG = new Color(0xF7, 0xFA, 0xF9);
-    private static final Color PROVINCE_BG = new Color(0xE3, 0xF0, 0xEE);
-    private static final Color REGION_BG = new Color(0xCF, 0xE5, 0xE2);
-    private static final Color GRAND_BG = new Color(0xB0, 0xD4, 0xCF);
-    private static final Color BORDER = new Color(0x8A, 0xA3, 0xA0);
+    private static final Color HEADER_BG = new Color(0x0C, 0x47, 0x97);
+    private static final Color GROUP_BG = new Color(0xF4, 0xF5, 0xF7);
+    private static final Color ALT_BG = new Color(0xF8, 0xF9, 0xFB);
+    private static final Color PROVINCE_BG = new Color(0xE6, 0xEE, 0xF9);
+    private static final Color REGION_BG = new Color(0xCD, 0xDC, 0xF1);
+    private static final Color GRAND_BG = new Color(0xAF, 0xC6, 0xE8);
+    private static final Color BORDER = new Color(0x8A, 0x94, 0xA6);
 
     /** 4 colonnes d'identification + 15 colonnes de chiffres + pourcentage. */
     private static final float[] WIDTHS = {13, 13, 15, 19,

@@ -24,7 +24,7 @@ export function LanguageSwitch({ className }: { className?: string }) {
   }
 
   return (
-    <div role="group" className={clsx("inline-flex gap-1 rounded-xl bg-[#e6ebe9] p-1 text-sm", className)}>
+    <div role="group" className={clsx("inline-flex gap-1 rounded-xl bg-[#e6e8ec] p-1 text-sm", className)}>
       {(["ar", "fr"] as const).map((l) => (
         <button key={l} type="button" lang={l} aria-pressed={locale === l} onClick={() => choose(l)}
           className={clsx("rounded-lg px-3.5 py-1.5 font-medium", locale === l ? "bg-white text-brand-700 shadow-sm" : "text-muted hover:text-ink")}>

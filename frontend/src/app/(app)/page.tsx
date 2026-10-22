@@ -11,7 +11,7 @@ import { useI18n } from "@/lib/i18n";
 import { useSeasons } from "@/lib/queries";
 import type { BeneficiarySummary, Cell, Dashboard, PageResponse } from "@/lib/types";
 
-const CATEGORY_COLOR = { MIGRANT: "#0f5c5a", DISABLED: "#f2b84b", OTHER: "#b5483a", REMAINING: "#9db3b0" } as const;
+const CATEGORY_COLOR = { MIGRANT: "#0c4797", DISABLED: "#b1b3b7", OTHER: "#b5483a", REMAINING: "#7f9cc6" } as const;
 const CATEGORY_ORDER = ["MIGRANT", "DISABLED", "OTHER", "REMAINING"] as const;
 
 function Kpi({ label, value, sub, color }: { label: string; value: string; sub: string; color: string }) {
@@ -71,11 +71,11 @@ export default function DashboardPage() {
         return (
           <div className="space-y-6">
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <Kpi label={t("dashboard.registered")} value={num(d.totals.registered.total)} sub={sub(d.totals.registered)} color="#0f5c5a" />
+              <Kpi label={t("dashboard.registered")} value={num(d.totals.registered.total)} sub={sub(d.totals.registered)} color="#0c4797" />
               <Kpi label={t("dashboard.departed")} value={num(d.totals.departed.total)} sub={sub(d.totals.departed)} color="#7a4e00" />
               <Kpi label={t("dashboard.graduates")} value={num(d.totals.graduates.total)} sub={sub(d.totals.graduates)} color="#1c6b3a" />
               <Kpi label={t("dashboard.passRate")} value={d.totals.passRatePercent == null ? "—" : `${num(d.totals.passRatePercent, 1)}%`}
-                sub={t("dashboard.passRate.note")} color="#14232b" />
+                sub={t("dashboard.passRate.note")} color="#16202e" />
             </div>
 
             {empty ? <Card><p className="text-center text-muted">{t("dashboard.noData")}</p></Card> : (
@@ -103,7 +103,7 @@ export default function DashboardPage() {
 
                 <section className="min-w-0 space-y-4 rounded-xl border border-line bg-white p-6 lg:col-span-2">
                   <h2 className="text-lg font-semibold">{t("dashboard.byCategory")}</h2>
-                  <div className="flex h-[22px] overflow-hidden rounded-md bg-[#e3ebe9]">
+                  <div className="flex h-[22px] overflow-hidden rounded-md bg-[#e3e6ea]">
                     {cats.map((c) => <div key={c.category} className="h-full" style={{ background: CATEGORY_COLOR[c.category], width: `${totalReg > 0 ? (c.n / totalReg) * 100 : 0}%` }} />)}
                   </div>
                   {cats.map((c) => (

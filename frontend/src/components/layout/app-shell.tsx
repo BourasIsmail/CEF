@@ -52,12 +52,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   const items = NAV.filter((i) => !i.show || i.show(user));
 
   const sidebar = (
-    <nav className="flex h-full flex-col bg-brand-900 text-white">
+    <nav className="flex h-full flex-col border-s border-line bg-white text-ink">
       <div className="flex items-center gap-3 px-4 pt-6 pb-7">
         <span className="grid size-10 shrink-0 place-items-center rounded-[10px] bg-accent text-[15px] font-bold text-brand-900">CEF</span>
         <div>
           <div className="text-[17px] font-bold">{t("app.short")}</div>
-          <div className="text-xs leading-normal text-brand-100">{t("app.tagline")}</div>
+          <div className="text-xs leading-normal text-muted">{t("app.tagline")}</div>
         </div>
       </div>
       <ul className="flex-1 space-y-1 px-4">
@@ -65,18 +65,18 @@ export function AppShell({ children }: { children: ReactNode }) {
           <li key={href}>
             <Link href={href} onClick={() => setOpen(false)} aria-current={active(href) ? "page" : undefined}
               className={clsx("block rounded-lg px-3.5 py-3 text-[15px] transition-colors",
-                active(href) ? "bg-[#1f6f6b] font-semibold text-white" : "font-medium text-[#d3e4e2] hover:bg-white/10")}>
+                active(href) ? "bg-brand-600 font-semibold text-white" : "font-medium text-ink/80 hover:bg-surface")}>
               {t(label)}
             </Link>
           </li>
         ))}
       </ul>
-      <div className="mx-4 mb-6 border-t border-[#2b5e5c] pt-4 text-[13px] leading-7 text-brand-100">
-        <Link href="/account" onClick={() => setOpen(false)} aria-current={active("/account") ? "page" : undefined} className="block hover:text-white">
-          <span className="block truncate text-sm font-semibold text-white">{user.fullName}</span>
+      <div className="mx-4 mb-6 border-t border-line pt-4 text-[13px] leading-7 text-muted">
+        <Link href="/account" onClick={() => setOpen(false)} aria-current={active("/account") ? "page" : undefined} className="block hover:text-ink">
+          <span className="block truncate text-sm font-semibold text-ink">{user.fullName}</span>
           <span className="block truncate">{t(`role.${user.role}`)}</span>
         </Link>
-        <button type="button" onClick={() => logout()} className="mt-2 inline-block font-medium text-accent hover:underline">
+        <button type="button" onClick={() => logout()} className="mt-2 inline-block font-medium text-brand-600 hover:underline">
           {t("nav.logout")}
         </button>
       </div>
@@ -99,7 +99,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <button type="button" className="rounded p-1.5 hover:bg-surface lg:hidden" aria-label="Menu" onClick={() => setOpen((v) => !v)}>
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
-          <p className="text-sm text-[#3c4d55]">
+          <p className="text-sm text-[#3f4a5a]">
             {t("dashboard.scope", { scope: "" })}
             <strong className="text-brand-600">{scopeLabel(user, name, t("dashboard.scope.national"))}</strong>
             {provinces.data && centersCount.data != null && (

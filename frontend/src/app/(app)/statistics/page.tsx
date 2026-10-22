@@ -132,7 +132,7 @@ export default function StatisticsPage() {
                       {region.provinces.map((province, pi) => (
                         <Fragment key={province.id}>
                           {province.filieres.map((f, fi) => f.categories.map((c, ci) => (
-                            <tr key={`${f.id}-${c.category}${ci}`} className={c.category === "REMAINING" ? "bg-[#F7FAF9]" : "bg-white"}>
+                            <tr key={`${f.id}-${c.category}${ci}`} className={c.category === "REMAINING" ? "bg-[#f8f9fb]" : "bg-white"}>
                               {pi === 0 && fi === 0 && ci === 0 && <td rowSpan={regionRows} className={TM}>{name(region)}</td>}
                               {fi === 0 && ci === 0 && <td rowSpan={provRows(province)} className={TM}>{name(province)}</td>}
                               {ci === 0 && <td rowSpan={f.categories.length} className={TM}>{name(f)}</td>}
@@ -140,19 +140,19 @@ export default function StatisticsPage() {
                               {cells(c.metrics)}
                             </tr>
                           )))}
-                          <tr className="bg-[#E3F0EE] font-bold">
+                          <tr className="bg-[#e6eef9] font-bold">
                             <td className={TL} colSpan={2}>{t("stats.totalProvince")}</td>{cells(province.total)}
                           </tr>
                         </Fragment>
                       ))}
-                      <tr className="bg-[#CFE5E2] font-bold">
+                      <tr className="bg-[#cddcf1] font-bold">
                         <td className={TL} colSpan={4}>{t("stats.totalRegion")}</td>{cells(region.total)}
                       </tr>
                     </Fragment>
                   );
                 })}
                 {d.regions.length > 1 && (
-                  <tr className="bg-[#B5D6D2] font-bold">
+                  <tr className="bg-[#b3c8e6] font-bold">
                     <td className={TL} colSpan={4}>{t("stats.totalAll")}</td>{cells(d.grandTotal)}
                   </tr>
                 )}
@@ -166,7 +166,7 @@ export default function StatisticsPage() {
   );
 }
 
-const TH = "border border-[#3F7E7B] bg-[#0F5C5A] px-[3px] py-[7px] text-center font-semibold text-white";
-const TD = "border border-[#CBD7D4] px-[3px] py-1.5 text-center tabular-nums";
-const TL = "border border-[#CBD7D4] px-2 py-1.5 text-start";
-const TM = "border border-[#CBD7D4] bg-[#F3F6F5] px-2 py-1.5 text-start align-middle font-semibold";
+const TH = "border border-[#5b84bb] bg-[#0c4797] px-[3px] py-[7px] text-center font-semibold text-white";
+const TD = "border border-[#cdd2da] px-[3px] py-1.5 text-center tabular-nums";
+const TL = "border border-[#cdd2da] px-2 py-1.5 text-start";
+const TM = "border border-[#cdd2da] bg-[#f4f5f7] px-2 py-1.5 text-start align-middle font-semibold";

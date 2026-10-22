@@ -62,7 +62,7 @@ export default function LoginPage() {
   const t = useT();
   return (
     <div className="grid min-h-screen lg:grid-cols-[1fr_1.1fr]">
-      <aside className="relative hidden overflow-hidden bg-brand-900 lg:block">
+      <aside className="relative hidden overflow-hidden bg-brand-600 lg:block">
         <Image src="/login-hero.webp" alt={t("login.heroAlt")} fill priority sizes="55vw" className="object-cover object-[50%_6%]" />
       </aside>
 

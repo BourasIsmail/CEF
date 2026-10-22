@@ -87,7 +87,7 @@ export function RequestForm({ request }: { request?: RequestDetail }) {
           <legend className="mb-2.5 p-0 text-[13px] font-medium">{t("req.field.type")}</legend>
           <div className="flex flex-wrap gap-2.5">
             {(["CREATE", "MODIFY"] as const).map((x) => (
-              <label key={x} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-[#C9D5D2] bg-white px-4 text-sm has-[:checked]:border-brand-600 has-[:checked]:bg-[#E3F0EE] has-[:checked]:font-semibold has-[:disabled]:opacity-60">
+              <label key={x} className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-[#cbd0d8] bg-white px-4 text-sm has-[:checked]:border-brand-600 has-[:checked]:bg-[#e6eef9] has-[:checked]:font-semibold has-[:disabled]:opacity-60">
                 <input type="radio" value={x} disabled={!!request} className="accent-brand-600" {...register("requestType")} />
                 <span>{t(x === "CREATE" ? "req.form.typeCreate" : "req.form.typeModify")}</span>
               </label>
@@ -145,7 +145,7 @@ export function RequestForm({ request }: { request?: RequestDetail }) {
         <button type="submit" disabled={save.isPending}
           className="min-h-12 rounded-lg border border-brand-600 bg-white px-6 text-[15px] font-semibold text-brand-700 hover:bg-brand-50 disabled:opacity-60">{t("req.form.saveDraft")}</button>
         <button type="button" disabled={!canSubmit || save.isPending} onClick={() => run(true)}
-          className="min-h-12 rounded-lg bg-brand-600 px-7 text-[15px] font-semibold text-white hover:bg-brand-700 disabled:bg-[#C9D5D2] disabled:text-muted">{t("req.form.submit")}</button>
+          className="min-h-12 rounded-lg bg-brand-600 px-7 text-[15px] font-semibold text-white hover:bg-brand-700 disabled:bg-[#cbd0d8] disabled:text-muted">{t("req.form.submit")}</button>
         {!canSubmit && <span className="text-[13px] text-[#5E3D00]">{t("req.form.submitHint")}</span>}
       </div>
     </form>

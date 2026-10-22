@@ -16,7 +16,7 @@ export function RolesMatrix() {
     [t("roles.r8"), t("roles.no"), t("roles.no"), t("roles.full")],
     [t("roles.r9"), t("roles.no"), t("roles.no"), t("roles.show")],
   ];
-  const th = "border border-[#3F7E7B] bg-[#0F5C5A] px-3 py-3.5 text-center font-semibold text-white";
+  const th = "border border-[#5b84bb] bg-[#0c4797] px-3 py-3.5 text-center font-semibold text-white";
   return (
     <section className="mb-6 space-y-4 rounded-xl border border-line bg-white p-5">
       <div className="overflow-x-auto">
@@ -32,14 +32,14 @@ export function RolesMatrix() {
           <tbody>
             {rows.map((r) => (
               <tr key={r[0]}>
-                <td className="border border-line bg-[#F3F6F5] p-3 text-start font-semibold leading-relaxed">{r[0]}</td>
+                <td className="border border-line bg-[#f4f5f7] p-3 text-start font-semibold leading-relaxed">{r[0]}</td>
                 {r.slice(1).map((c, i) => <td key={i} className="border border-line p-3 text-center leading-relaxed">{c}</td>)}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="rounded-lg bg-[#F3F6F5] px-4 py-3 text-[13px] leading-relaxed text-muted">{t("roles.future")}</p>
+      <p className="rounded-lg bg-[#f4f5f7] px-4 py-3 text-[13px] leading-relaxed text-muted">{t("roles.future")}</p>
     </section>
   );
 }

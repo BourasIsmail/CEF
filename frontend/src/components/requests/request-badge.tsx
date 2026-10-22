@@ -5,7 +5,7 @@ import type { RequestStatus } from "@/lib/types";
 
 /** Couleurs de la maquette « طلبات الشعب ». */
 const colors: Record<RequestStatus, string> = {
-  DRAFT: "bg-[#EEF3F2] text-[#3C4D55]",
+  DRAFT: "bg-[#eef0f3] text-[#3f4a5a]",
   SUBMITTED: "bg-[#FBF1DC] text-[#6B4300]",
   RETURNED: "bg-[#FFE9D2] text-[#8A3F00]",
   REGIONAL_VALIDATED: "bg-[#E4EEF9] text-[#1B4A7F]",
@@ -31,9 +31,9 @@ export function RequestPath({ state }: { state?: ("done" | "cur" | "todo" | "bad
     <ol className="flex flex-wrap gap-3">
       {STEP_LABELS.map((n, i) => {
         const s = state?.[i];
-        const box = s === "cur" ? "border-[#C9922B] bg-[#FBF1DC]" : s === "done" ? "border-[#9CC8C3] bg-[#E3F0EE]"
+        const box = s === "cur" ? "border-[#C9922B] bg-[#FBF1DC]" : s === "done" ? "border-[#9db8de] bg-[#e6eef9]"
           : s === "bad" ? "border-[#E3B6B0] bg-[#F9E3E0]" : "border-line bg-surface";
-        const dot = !state ? "bg-brand-600" : s === "done" ? "bg-brand-600" : s === "cur" ? "bg-[#8A5A00]" : s === "bad" ? "bg-[#9A2B22]" : "bg-[#B9C6C3]";
+        const dot = !state ? "bg-brand-600" : s === "done" ? "bg-brand-600" : s === "cur" ? "bg-[#8A5A00]" : s === "bad" ? "bg-[#9A2B22]" : "bg-[#bcc1c9]";
         return (
           <li key={n} className={`flex min-w-[190px] flex-1 items-center gap-3 rounded-[10px] border px-3.5 py-3 text-sm leading-6 ${state ? box : "border-transparent bg-surface"}`}>
             <span className={`grid size-8 shrink-0 place-items-center rounded-full font-bold text-white ${dot}`}>{n}</span>

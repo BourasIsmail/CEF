@@ -42,10 +42,10 @@ function Body({ onClose, initial, loading, onSave }: { onClose: () => void; init
       <p className="text-sm text-muted">{t("filieres.assign.hint")}</p>
       {centers.isPending ? <Spinner /> : groups.map((g) => (
         <fieldset key={g.label} className="space-y-2">
-          <legend className="mb-1 text-sm font-semibold text-[#3c4d55]">{g.label}</legend>
+          <legend className="mb-1 text-sm font-semibold text-[#3f4a5a]">{g.label}</legend>
           <div className="flex flex-wrap gap-2">
             {g.items.map((c) => (
-              <label key={c.id} className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm ${selected.has(c.id) ? "border-brand-600 bg-[#E3F0EE] text-[#0B4745]" : "border-[#b9c6c3] bg-white"}`}>
+              <label key={c.id} className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm ${selected.has(c.id) ? "border-brand-600 bg-[#e6eef9] text-[#093670]" : "border-[#bcc1c9] bg-white"}`}>
                 <input type="checkbox" className="size-4 accent-brand-600" checked={selected.has(c.id)} onChange={() => toggle(c.id)} />
                 {name(c)}
               </label>

@@ -26,7 +26,7 @@ const ACTIVITY_STYLE = {
   ON_LEAVE: "bg-[#FBF1DC] text-[#6B4300]",
   SECONDED: "bg-[#E4EEF9] text-[#1B4A7F]",
   SUSPENDED: "bg-[#F9E4E1] text-[#A4332B]",
-  RETIRED: "bg-[#EEF3F2] text-[#3C4D55]",
+  RETIRED: "bg-[#eef0f3] text-[#3f4a5a]",
 } as const;
 const ACTIVITIES = ["ACTIVE", "ON_LEAVE", "SECONDED", "SUSPENDED", "RETIRED"] as const;
 

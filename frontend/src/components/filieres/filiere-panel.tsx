@@ -20,7 +20,7 @@ interface ModuleRow { key: string; id?: number; nameAr: string; nameFr?: string;
 
 const toRow = (m: ModuleView): ModuleRow => ({ key: `m${m.id}`, id: m.id, nameAr: m.nameAr, nameFr: m.nameFr, coefficient: String(m.coefficient), durationHours: String(m.durationHours) });
 const sectionCls = "flex flex-col gap-4 rounded-xl border border-line bg-white p-6";
-const cellInput = "h-10 w-full rounded-lg border border-[#b9c6c3] bg-white px-2.5 text-sm disabled:bg-[#eef3f2]";
+const cellInput = "h-10 w-full rounded-lg border border-[#bcc1c9] bg-white px-2.5 text-sm disabled:bg-[#eef0f3]";
 
 /** Panneau de droite de la page « الشعب والوحدات » : données, modules (édition en ligne) et centres de la filière. */
 export function FiliereEditor({ id, admin }: { id: number; admin: boolean }) {
@@ -154,7 +154,7 @@ function Editor({ detail, admin }: { detail: FiliereDetail; admin: boolean }) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-[#eef3f2] text-[#3c4d55]">
+              <tr className="bg-[#eef0f3] text-[#3f4a5a]">
                 <th className="px-3 py-3 text-start font-semibold">{t("modules.col.position")}</th>
                 <th className="px-3 py-3 text-start font-semibold">{t("modules.col.name")}</th>
                 <th className="px-3 py-3 text-start font-semibold">{t("modules.col.coefficient")}</th>
@@ -175,7 +175,7 @@ function Editor({ detail, admin }: { detail: FiliereDetail; admin: boolean }) {
                   </td>
                 </tr>
               ))}
-              <tr className="bg-[#eef3f2] font-bold">
+              <tr className="bg-[#eef0f3] font-bold">
                 <td className="px-3 py-3" colSpan={2}>{t("modules.total")}</td>
                 <td className="px-3 py-3 tabular-nums">{num(totalCoef, 2)}</td>
                 <td className="px-3 py-3 tabular-nums">{num(totalHours)}</td>
@@ -194,10 +194,10 @@ function Editor({ detail, admin }: { detail: FiliereDetail; admin: boolean }) {
         {byProvince.length === 0 && <p className="text-sm text-muted">{t("filieres.noCenters")}</p>}
         {byProvince.map((p) => (
           <div key={p.id} className="flex flex-col gap-2">
-            <div className="text-sm font-semibold text-[#3c4d55]">{p.label}</div>
+            <div className="text-sm font-semibold text-[#3f4a5a]">{p.label}</div>
             <div className="flex flex-wrap gap-2">
               {p.centers.map((c) => (
-                <span key={c.id} className="inline-flex items-center gap-2 rounded-full bg-[#E3F0EE] px-3.5 py-2 text-sm text-[#0B4745]">
+                <span key={c.id} className="inline-flex items-center gap-2 rounded-full bg-[#e6eef9] px-3.5 py-2 text-sm text-[#093670]">
                   {c.nameAr}
                   {admin && (
                     <button type="button" aria-label={`${t("filieres.removeCenter")}: ${c.nameAr}`} title={t("filieres.removeCenter")}

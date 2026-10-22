@@ -7,17 +7,17 @@
 @theme {
   --font-sans: "IBM Plex Sans Arabic", system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --color-brand-50: #e3f0ee;
-  --color-brand-100: #bcd5d2;
-  --color-brand-500: #1a7a77;
-  --color-brand-600: #0f5c5a;
-  --color-brand-700: #0e4a49;
-  --color-brand-900: #0e3f3e;
-  --color-accent: #f2b84b;
-  --color-ink: #14232b;
-  --color-muted: #4f5f67;
-  --color-line: #dde4e2;
-  --color-surface: #f3f6f5;
+  --color-brand-50: #e6eef9;
+  --color-brand-100: #c3d5ee;
+  --color-brand-500: #2f6fc4;
+  --color-brand-600: #0c4797;
+  --color-brand-700: #0a3a7c;
+  --color-brand-900: #0a2c5e;
+  --color-accent: #b1b3b7;
+  --color-ink: #16202e;
+  --color-muted: #505a68;
+  --color-line: #dfe2e7;
+  --color-surface: #f4f5f7;
   --color-danger: #b3261e;
   --color-danger-50: #fbe9e7;
   --color-ok: #1b7f4b;
@@ -53,7 +53,7 @@ body {
 }
 
 dialog::backdrop {
-  background: rgb(20 35 43 / 0.5);
+  background: rgb(22 32 46 / 0.5);
 }
 
 /* Impression (bulletin) : on masque la navigation, le contenu seul reste. */
