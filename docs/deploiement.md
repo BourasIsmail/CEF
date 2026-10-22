@@ -94,6 +94,19 @@ docker compose --profile frontend up -d --build
 
 Les migrations de base de données s'appliquent automatiquement au démarrage. Faire une **sauvegarde MySQL avant** chaque mise à jour.
 
+## 7 bis. Correctifs de sécurité Node.js
+
+Seul le conteneur **frontend** exécute Node.js (image `node:22-alpine`) ; le backend est en Java. Une image déjà construite ne reçoit
+pas les correctifs : après chaque bulletin de sécurité Node.js (CERT, DGSSI), reconstruire en retirant le cache et en retéléchargeant
+l'image de base, puis vérifier la version :
+
+```bash
+cd CEF
+docker compose --profile frontend build --pull --no-cache frontend
+docker compose --profile frontend up -d
+docker compose exec frontend node -v        # comparer avec les versions corrigées du bulletin
+```
+
 ## 8. Sauvegardes
 
 - **Base MySQL** : `mysqldump --single-transaction --routines -h 172.16.20.111 -u <compte> -p entraide_cef_db > cef-$(date +%F).sql`
