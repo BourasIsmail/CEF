@@ -16,7 +16,7 @@ import ma.entraidenationale.cef.user.domain.AppUser;
 import ma.entraidenationale.cef.user.domain.AppUserRepository;
 
 /**
- * Premier démarrage : crée le compte administrateur à partir de BOOTSTRAP_ADMIN_USERNAME / BOOTSTRAP_ADMIN_PASSWORD,
+ * Premier démarrage : crée le compte administrateur à partir de BOOTSTRAP_ADMIN_EMAIL / BOOTSTRAP_ADMIN_PASSWORD,
  * uniquement si la table des utilisateurs est vide. Aucun mot de passe n'est jamais committé ni journalisé.
  * Une fois connecté, l'administrateur crée les autres comptes et peut retirer ces variables.
  */
@@ -44,6 +44,16 @@ class BootstrapAdmin implements ApplicationRunner {
         if (!hasEmail) {
             return;
         }
+        try {
+            create(email, password);
+        } catch (RuntimeException e) {
+            // une valeur invalide ne doit pas empêcher le démarrage : l'erreur est dite clairement dans le journal
+            log.error("Compte administrateur initial NON créé ({}). Corrigez BOOTSTRAP_ADMIN_EMAIL / BOOTSTRAP_ADMIN_PASSWORD "
+                    + "(mot de passe de 12 à 64 caractères, une lettre et un chiffre, sans la partie de l'e-mail avant @).", e.getMessage());
+        }
+    }
+
+    private void create(String email, String password) {
         tx.executeWithoutResult(status -> {
             if (users.count() > 0) {
                 return;
