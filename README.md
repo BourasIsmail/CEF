@@ -115,5 +115,6 @@ Aucun secret n'est committé : tout passe par variables d'environnement (`.env.e
 - [Règles du rapport statistique](docs/statistics-rules.md)
 - [API](docs/api.md)
 - [Frontend](docs/frontend.md)
+- [Déploiement sur une VM](docs/deploiement.md)
 - [Guide d'utilisation en arabe (PDF)](docs/guide-utilisation-ar.pdf)
 - [Maquettes (PDF)](docs/CEF-Manager-maquettes.pdf)
