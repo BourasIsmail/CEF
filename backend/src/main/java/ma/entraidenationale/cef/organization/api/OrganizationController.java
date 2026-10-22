@@ -19,6 +19,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import ma.entraidenationale.cef.organization.api.OrganizationDtos.Commune;
 import ma.entraidenationale.cef.organization.api.OrganizationDtos.CommuneRequest;
+import ma.entraidenationale.cef.organization.api.OrganizationDtos.LandProviderView;
 import ma.entraidenationale.cef.organization.api.OrganizationDtos.PartnerTypeView;
 import ma.entraidenationale.cef.organization.api.OrganizationDtos.Province;
 import ma.entraidenationale.cef.organization.api.OrganizationDtos.ProvinceRequest;
@@ -52,6 +53,11 @@ class OrganizationController {
     @GetMapping("/space-types")
     List<SpaceTypeView> spaceTypes() {
         return organization.spaceTypes();
+    }
+
+    @GetMapping("/land-providers")
+    List<LandProviderView> landProviders() {
+        return organization.landProviders();
     }
 
     @GetMapping("/partner-types")

@@ -24,23 +24,27 @@ Windows (PowerShell) :
 Copy-Item .env.example .env
 ```
 
-Éditer `.env` : remplacer chaque `change-me` (au minimum `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`, `JWT_SECRET`,
-`BOOTSTRAP_ADMIN_PASSWORD`). Générer un secret : `openssl rand -base64 48` (Linux / macOS / Git Bash) ou, en PowerShell,
+Éditer `.env` : renseigner la **base MySQL 8 existante** (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`), puis remplacer chaque
+`change-me` restant (au minimum `JWT_SECRET`, `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD`). Au démarrage, Flyway crée ou met
+à jour le schéma dans cette base (le compte doit avoir les droits DDL) et charge les données de référence : 12 régions, 82
+provinces / préfectures, 1 523 communes, partenaires, organismes « موضوع رهن الإشارة ». **Ne committez jamais `.env`.** Générer un secret : `openssl rand -base64 48` (Linux / macOS / Git Bash) ou, en PowerShell,
 `[Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Maximum 256 }) -as [byte[]])`.
 
 ```bash
-docker compose --profile frontend up -d --build   # MySQL + backend + interface
+docker compose --profile frontend up -d --build   # backend + interface, branchés sur la base de DB_URL
+# sans base existante : MySQL local dans Docker (voir les lignes « localdb » de .env.example)
+docker compose --profile localdb --profile frontend up -d --build
 ```
 
-Ouvrir <http://localhost:3000> et se connecter avec `BOOTSTRAP_ADMIN_USERNAME` / `BOOTSTRAP_ADMIN_PASSWORD`.
-Sans `--profile frontend`, seuls MySQL et le backend démarrent (`http://localhost:8080/actuator/health`).
+Ouvrir <http://localhost:3000> et se connecter avec l'adresse `BOOTSTRAP_ADMIN_EMAIL` et `BOOTSTRAP_ADMIN_PASSWORD` (la connexion se fait par **e-mail**).
+Sans `--profile frontend`, seul le backend démarre (`http://localhost:8080/actuator/health`).
 
 À savoir :
 
 - **HTTP local** : mettre `COOKIE_SECURE=false` dans `.env` ; sinon le navigateur refuse les cookies de connexion.
   En production (HTTPS), laisser `true`.
 - `CORS_ALLOWED_ORIGINS` doit contenir l'origine publique du frontend (défaut `http://localhost:3000`).
-- Le mot de passe de l'administrateur initial ne doit pas contenir son identifiant (12 caractères minimum, une lettre
+- Le mot de passe de l'administrateur initial ne doit pas contenir la partie de son e-mail située avant @ (12 caractères minimum, une lettre
   et un chiffre). Il n'est créé que si aucun utilisateur n'existe ; retirer ces variables ensuite.
 - `SPRING_PROFILES_ACTIVE=dev` charge en plus un jeu de données fictif (20 bénéficiaires, 5 centres…) et Swagger ;
   `prod` n'applique que le schéma et les données de référence.

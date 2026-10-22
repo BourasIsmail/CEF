@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -51,9 +52,9 @@ class OrganizationApiIT extends AbstractApiIT {
 
     @Test
     void provincesAreFilteredByScope() throws Exception {
-        mvc.perform(get("/api/provinces").with(admin())).andExpect(jsonPath("$", hasSize(3)));
+        mvc.perform(get("/api/provinces").with(admin())).andExpect(jsonPath("$", hasSize(82)));
         mvc.perform(get("/api/provinces").with(regional("06")))
-                .andExpect(jsonPath("$[*].code", contains("0601", "0602")));
+                .andExpect(jsonPath("$", hasSize(16))).andExpect(jsonPath("$[*].code", hasItems("0601", "0602")));
         mvc.perform(get("/api/provinces").with(provincial("0601")))
                 .andExpect(jsonPath("$", hasSize(1))).andExpect(jsonPath("$[0].code").value("0601"));
     }
@@ -61,7 +62,7 @@ class OrganizationApiIT extends AbstractApiIT {
     @Test
     void communesOfAnotherProvinceAreHidden() throws Exception {
         mvc.perform(get("/api/communes").param("provinceId", String.valueOf(provinceId("0601"))).with(provincial("0601")))
-                .andExpect(status().isOk()).andExpect(jsonPath("$", hasSize(3)));
+                .andExpect(status().isOk()).andExpect(jsonPath("$[*].nameAr", hasItems("سيدي مومن", "عين الشق", "الحي الحسني")));
         mvc.perform(get("/api/communes").param("provinceId", String.valueOf(provinceId("0401"))).with(provincial("0601")))
                 .andExpect(status().isNotFound());
     }
@@ -231,10 +232,40 @@ class OrganizationApiIT extends AbstractApiIT {
     @Test
     void landOwnerIsRequiredForProvidedOrOtherSector() throws Exception {
         long commune = communeId("0601", "عين الشق");
+        long stateDomain = jdbc.queryForObject("SELECT id FROM land_provider WHERE code = 'L06'", Long.class);   // أملاك الدولة
+        long otherSector = jdbc.queryForObject("SELECT id FROM land_provider WHERE code = 'L13'", Long.class);   // قطاع آخر مع تحديده
+        // mis à disposition : l'organisme est obligatoire ; « autre secteur » demande en plus une précision
         create(provincial("0601"), body(commune, "\"landStatus\": \"PROVIDED_TO_EN\""))
+                .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.code").value("center.land_provider_required"));
+        create(provincial("0601"), body(commune, "\"landStatus\": \"PROVIDED_TO_EN\", \"landProviderId\": 999999"))
+                .andExpect(jsonPath("$.code").value("center.land_provider_unknown"));
+        create(provincial("0601"), body(commune, "\"landStatus\": \"PROVIDED_TO_EN\", \"landProviderId\": %d".formatted(otherSector)))
                 .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.code").value("center.land_owner_required"));
-        create(provincial("0601"), body(commune, "\"landStatus\": \"PROVIDED_TO_EN\", \"landOwnerText\": \"وزارة الأوقاف\""))
-                .andExpect(status().isCreated());
+        create(provincial("0601"), body(commune, "\"landStatus\": \"PROVIDED_TO_EN\", \"landProviderId\": %d, \"landOwnerText\": \"وزارة الأوقاف\"".formatted(otherSector)))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.landOwnerText").value("وزارة الأوقاف"));
+        create(provincial("0601"), body(commune, "\"landStatus\": \"PROVIDED_TO_EN\", \"landProviderId\": %d, \"landOwnerText\": \"ignoré\"".formatted(stateDomain)))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.landProviderNameAr").value("أملاك الدولة"))
+                .andExpect(jsonPath("$.landOwnerText").doesNotExist());
+        create(provincial("0601"), body(commune, "\"landStatus\": \"OTHER_SECTOR\""))
+                .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.code").value("center.land_owner_required"));
+    }
+
+    @Test
+    void partnersThatNeedASpecificationRequireOne() throws Exception {
+        long commune = communeId("0601", "عين الشق");
+        long association = jdbc.queryForObject("SELECT id FROM association WHERE name_ar = 'جمعية النور للتنمية'", Long.class);
+        long privateSector = jdbc.queryForObject("SELECT id FROM partner_type WHERE code = 'P17'", Long.class);   // القطاع الخاص (مع تحديده)
+        long ruralCommune = jdbc.queryForObject("SELECT id FROM partner_type WHERE code = 'P05'", Long.class);
+        create(provincial("0601"), body(commune, """
+                "associations": [{"associationId": %d, "partnerTypeIds": [%d]}]""".formatted(association, privateSector)))
+                .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.code").value("center.partner_specification_required"));
+        create(provincial("0601"), body(commune, """
+                "associations": [{"associationId": %d, "partnerTypeIds": [%d], "partnerSpecification": "شركة س"}]""".formatted(association, privateSector)))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.associations[0].partnerSpecification").value("شركة س"));
+        // sans partenaire « مع تحديده », la précision est ignorée
+        create(provincial("0601"), body(commune, """
+                "associations": [{"associationId": %d, "partnerTypeIds": [%d], "partnerSpecification": "ignorée"}]""".formatted(association, ruralCommune)))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.associations[0].partnerSpecification").doesNotExist());
     }
 
     // ------------------------------------------------------------------ espaces et associations
@@ -270,7 +301,7 @@ class OrganizationApiIT extends AbstractApiIT {
     void associationLinksAreValidatedAndReplaced() throws Exception {
         long commune = communeId("0601", "عين الشق");
         long association = jdbc.queryForObject("SELECT id FROM association WHERE name_ar = 'جمعية النور للتنمية'", Long.class);
-        long partnerLocal = jdbc.queryForObject("SELECT id FROM partner_type WHERE code = 'LOCAL'", Long.class);
+        long partnerLocal = jdbc.queryForObject("SELECT id FROM partner_type WHERE code = 'P05'", Long.class);
 
         create(provincial("0601"), body(commune, """
                 "associations": [{"associationId": %d, "measureTaken": "OTHER"}]""".formatted(association)))
@@ -290,7 +321,7 @@ class OrganizationApiIT extends AbstractApiIT {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.associationsCount").value(1))
                 .andExpect(jsonPath("$.associations[0].partnershipEvaluation").value("GOOD"))
-                .andExpect(jsonPath("$.associations[0].partners[0].code").value("LOCAL"));
+                .andExpect(jsonPath("$.associations[0].partners[0].code").value("P05"));
     }
 
     @Test
@@ -361,7 +392,10 @@ class OrganizationApiIT extends AbstractApiIT {
     void referenceListsAreAvailable() throws Exception {
         mvc.perform(get("/api/space-types").with(provincial("0601")))
                 .andExpect(jsonPath("$", hasSize(13))).andExpect(jsonPath("$[12].requiresSpecification").value(true));
-        mvc.perform(get("/api/partner-types").with(provincial("0601"))).andExpect(jsonPath("$", hasSize(3)));
+        mvc.perform(get("/api/partner-types").with(provincial("0601")))
+                .andExpect(jsonPath("$", hasSize(23))).andExpect(jsonPath("$[16].requiresSpecification").value(true));
+        mvc.perform(get("/api/land-providers").with(provincial("0601")))
+                .andExpect(jsonPath("$", hasSize(13))).andExpect(jsonPath("$[12].requiresSpecification").value(true));
     }
 
     @Test
@@ -381,7 +415,7 @@ class OrganizationApiIT extends AbstractApiIT {
 
     @Test
     void onlyAdminManagesProvincesAndCommunes() throws Exception {
-        String province = "{\"regionId\": %d, \"code\": \"0603\", \"nameAr\": \"المديرية الإقليمية لبرشيد\", \"nameFr\": \"Direction provinciale de Berrechid\"}"
+        String province = "{\"regionId\": %d, \"code\": \"9901\", \"nameAr\": \"المديرية الإقليمية لبرشيد\", \"nameFr\": \"Direction provinciale de Berrechid\"}"
                 .formatted(regionId("06"));
         mvc.perform(post("/api/provinces").contentType(APPLICATION_JSON).content(province).with(provincial("0601")))
                 .andExpect(status().isForbidden());

@@ -65,3 +65,15 @@ erDiagram
 
 - **Référence** (migrations, tous environnements) : 12 régions, 13 types d'espaces (المرافق), 3 types de partenaires provisoires, 8 types de pièces, programme CEF.
 - **Dev** (`db/seed-dev`, profil `dev` uniquement) : 3 directions provinciales, 5 centres, 3 filières avec modules, 20 bénéficiaires couvrant toutes les catégories et tous les statuts, sessions d'examen (dont un rattrapage), diplômes, 5 employés. Aucun compte utilisateur : voir l'étape sécurité.
+
+
+## Découpage territorial et référentiels (V11)
+
+- 12 régions (`regional_directorate`, codes `01`–`12`), 82 provinces / préfectures (`provincial_directorate`) et 1 523 communes
+  (`commune`) proviennent des tables officielles fournies par l'Entraide Nationale. Les noms français reprennent le nom arabe
+  tant qu'ils ne sont pas saisis. Code d'une province : code région (2 chiffres) + rang (2 chiffres) ; pour la région 06,
+  Casablanca-Anfa = `0601` et Mohammedia = `0602`.
+- `partner_type` : 23 partenaires (الشركاء) ; `requires_specification` pour ceux « مع تحديده » ; la précision est stockée dans
+  `center_association.partner_specification`.
+- `land_provider` : 13 organismes « موضوع رهن الإشارة » ; `center.land_provider_id` (obligatoire pour la situation foncière
+  « mis à disposition de l'Entraide Nationale »).

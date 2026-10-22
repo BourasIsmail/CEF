@@ -32,7 +32,7 @@ import ma.entraidenationale.cef.user.service.UserService;
 @Tag(name = "Authentification")
 class AuthController {
 
-    record LoginRequest(@NotBlank String username, @NotBlank String password, Boolean rememberMe) {
+    record LoginRequest(@NotBlank String email, @NotBlank String password, Boolean rememberMe) {
     }
 
     record ChangePasswordRequest(@NotBlank String currentPassword, @NotBlank String newPassword) {
@@ -52,7 +52,7 @@ class AuthController {
     @PostMapping("/login")
     ResponseEntity<View> login(@Valid @RequestBody LoginRequest req, HttpServletRequest http,
                                @RequestHeader(value = HttpHeaders.USER_AGENT, required = false) String userAgent) {
-        return respond(auth.login(req.username(), req.password(), http.getRemoteAddr(), userAgent),
+        return respond(auth.login(req.email(), req.password(), http.getRemoteAddr(), userAgent),
                 Boolean.FALSE.equals(req.rememberMe()));
     }
 

@@ -38,15 +38,19 @@ class AuthApiIT extends AbstractApiIT {
     @PersistenceContext
     private EntityManager em;
 
+        private static String email(String name) {
+        return name.contains("@") ? name : name + "@cef.test";
+    }
+
     private void createUser(String username, String role, String extra) throws Exception {
         mvc.perform(post("/api/users").with(admin()).contentType(APPLICATION_JSON).content("""
-                {"username": "%s", "password": "%s", "fullName": "Utilisateur Test", "role": "%s"%s}
-                """.formatted(username, PASSWORD, role, extra.isEmpty() ? "" : ", " + extra))).andExpect(status().isCreated());
+                {"email": "%s", "password": "%s", "fullName": "Utilisateur Test", "role": "%s"%s}
+                """.formatted(email(username), PASSWORD, role, extra.isEmpty() ? "" : ", " + extra))).andExpect(status().isCreated());
     }
 
     private MvcResult login(String username, String password) throws Exception {
         return mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON)
-                .content("{\"username\": \"%s\", \"password\": \"%s\"}".formatted(username, password))).andReturn();
+                .content("{\"email\": \"%s\", \"password\": \"%s\"}".formatted(email(username), password))).andReturn();
     }
 
     private static String cookie(MvcResult r, String name) {
@@ -76,7 +80,7 @@ class AuthApiIT extends AbstractApiIT {
         assertThat(refresh).contains("HttpOnly").contains("SameSite=Lax").contains("Path=/api/auth").contains("Max-Age=604800");
         assertThat(r.getResponse().getContentAsString())
                 .doesNotContain(cookie(r, AuthCookies.ACCESS)).doesNotContain(cookie(r, AuthCookies.REFRESH)).doesNotContain("password");
-        assertThat(r.getResponse().getContentAsString()).contains("\"username\":\"nadia.p\"").contains("\"role\":\"PROVINCIAL\"");
+        assertThat(r.getResponse().getContentAsString()).contains("\"email\":\"nadia.p@cef.test\"").contains("\"role\":\"PROVINCIAL\"");
         assertThat(r.getResponse().getHeader(HttpHeaders.CACHE_CONTROL)).isEqualTo("no-store");
     }
 
@@ -84,7 +88,7 @@ class AuthApiIT extends AbstractApiIT {
     void loginWithoutRememberMeIssuesSessionRefreshCookie() throws Exception {
         createUser("sara.p", "PROVINCIAL", "\"provinceId\": " + provinceId("0601"));
         MvcResult r = mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON)
-                .content("{\"username\": \"sara.p\", \"password\": \"%s\", \"rememberMe\": false}".formatted(PASSWORD)))
+                .content("{\"email\": \"sara.p@cef.test\", \"password\": \"%s\", \"rememberMe\": false}".formatted(PASSWORD)))
                 .andExpect(status().isOk()).andReturn();
         assertThat(setCookie(r, AuthCookies.REFRESH)).doesNotContain("Max-Age").contains("HttpOnly");
         assertThat(setCookie(r, AuthCookies.SESSION_ONLY)).contains("cef_session_only=1");
@@ -127,7 +131,7 @@ class AuthApiIT extends AbstractApiIT {
         assertThat(locked.getResponse().getContentAsString()).contains("auth.invalid_credentials");
         mvc.perform(get("/api/users").with(admin()).param("search", "nadia")).andExpect(jsonPath("$.content[0].locked").value(true));
 
-        jdbc.update("UPDATE app_user SET locked_until = ? WHERE username = 'nadia.p'", java.sql.Timestamp.from(Instant.now().minusSeconds(5)));
+        jdbc.update("UPDATE app_user SET locked_until = ? WHERE email = 'nadia.p@cef.test'", java.sql.Timestamp.from(Instant.now().minusSeconds(5)));
         em.clear();
         assertThat(login("nadia.p", PASSWORD).getResponse().getStatus()).isEqualTo(200);
     }
@@ -148,7 +152,7 @@ class AuthApiIT extends AbstractApiIT {
     @Test
     void loginRequiresCsrfToken() throws Exception {
         mvcWithoutCsrf.perform(post("/api/auth/login").contentType(APPLICATION_JSON)
-                .content("{\"username\": \"a\", \"password\": \"b\"}")).andExpect(status().isForbidden());
+                .content("{\"email\": \"a@cef.test\", \"password\": \"b\"}")).andExpect(status().isForbidden());
         mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{}")).andExpect(status().isBadRequest());
     }
 
@@ -171,7 +175,7 @@ class AuthApiIT extends AbstractApiIT {
         String newRefresh = cookie(second, AuthCookies.REFRESH);
         assertThat(newRefresh).isNotEqualTo(oldRefresh);
         mvc.perform(get("/api/auth/me").cookie(new Cookie(AuthCookies.ACCESS, cookie(second, AuthCookies.ACCESS))))
-                .andExpect(jsonPath("$.username").value("nadia.p"));
+                .andExpect(jsonPath("$.email").value("nadia.p@cef.test"));
         // en base, seule l'empreinte est stockée
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM refresh_token WHERE token_hash IN (?, ?)", Long.class, oldRefresh, newRefresh)).isZero();
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM refresh_token WHERE token_hash = ?", Long.class, RefreshTokenStore.hash(newRefresh))).isEqualTo(1L);
@@ -214,7 +218,7 @@ class AuthApiIT extends AbstractApiIT {
     void disabledAccountCannotRefresh() throws Exception {
         createUser("nadia.p", "PROVINCIAL", "\"provinceId\": " + provinceId("0601"));
         String token = cookie(login("nadia.p", PASSWORD), AuthCookies.REFRESH);
-        jdbc.update("UPDATE app_user SET enabled = FALSE WHERE username = 'nadia.p'");
+        jdbc.update("UPDATE app_user SET enabled = FALSE WHERE email = 'nadia.p@cef.test'");
         em.clear();
         assertThat(refresh(token).getResponse().getStatus()).isEqualTo(401);
         assertThat(login("nadia.p", PASSWORD).getResponse().getStatus()).isEqualTo(401);
@@ -296,7 +300,7 @@ class AuthApiIT extends AbstractApiIT {
     @Test
     void passwordsAreStoredHashedOnly() throws Exception {
         createUser("nadia.p", "ADMIN", "");
-        String stored = jdbc.queryForObject("SELECT password_hash FROM app_user WHERE username = 'nadia.p'", String.class);
+        String stored = jdbc.queryForObject("SELECT password_hash FROM app_user WHERE email = 'nadia.p@cef.test'", String.class);
         assertThat(stored).startsWith("{bcrypt}").doesNotContain(PASSWORD);
         mvc.perform(get("/api/users").with(admin()).param("search", "nadia"))
                 .andExpect(content().string(not(containsString("bcrypt")))).andExpect(content().string(not(containsString("passwordHash"))));

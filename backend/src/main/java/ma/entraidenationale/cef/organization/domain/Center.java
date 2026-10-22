@@ -80,6 +80,11 @@ public class Center extends AuditedEntity {
     @Column(name = "land_owner_text", length = 255)
     private String landOwnerText;
 
+    /** موضوع رهن الإشارة : organisme propriétaire quand la situation foncière est « mis à disposition ». */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "land_provider_id")
+    private LandProvider landProvider;
+
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "management_mode", length = 40)

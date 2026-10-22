@@ -20,10 +20,9 @@ public final class UserDtos {
      * (+ {@code provinceId} ; la région est déduite). Les autres profils sont réservés à de futures extensions.
      */
     public record CreateRequest(
-            @NotBlank @Size(min = 3, max = 100) @Pattern(regexp = "[A-Za-z0-9._-]+", message = "lettres, chiffres, point, tiret et souligné uniquement") String username,
+            @NotBlank @Email @Size(max = 200) String email,
             @NotBlank String password,
             @NotBlank @Size(max = 200) String fullName,
-            @Email @Size(max = 200) String email,
             @NotNull AppRole role,
             Long regionId,
             Long provinceId,
@@ -32,7 +31,7 @@ public final class UserDtos {
 
     public record UpdateRequest(
             @NotBlank @Size(max = 200) String fullName,
-            @Email @Size(max = 200) String email,
+            @NotBlank @Email @Size(max = 200) String email,
             @NotNull AppRole role,
             Long regionId,
             Long provinceId,
@@ -49,7 +48,7 @@ public final class UserDtos {
     }
 
     public record View(
-            Long id, String username, String fullName, String email, AppRole role,
+            Long id, String email, String fullName, AppRole role,
             Long regionId, String regionNameAr, Long provinceId, String provinceNameAr, Long centerId,
             boolean enabled, boolean locked, String preferredLocale, Instant lastLoginAt, Instant createdAt) {
     }

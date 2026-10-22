@@ -27,6 +27,6 @@ public record CefProperties(Cors cors, Storage storage, Security security) {
     public record Security(String jwtSecret, Duration accessTokenTtl, Duration refreshTokenTtl,
                            boolean cookieSecure, String cookieSameSite,
                            int maxFailedAttempts, Duration lockDuration,
-                           String bootstrapAdminUsername, String bootstrapAdminPassword) {
+                           String bootstrapAdminEmail, String bootstrapAdminPassword) {
     }
 }

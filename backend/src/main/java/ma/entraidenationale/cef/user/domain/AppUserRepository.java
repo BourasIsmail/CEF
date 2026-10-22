@@ -9,9 +9,11 @@ import org.springframework.data.repository.query.Param;
 
 public interface AppUserRepository extends JpaRepository<AppUser, Long>, JpaSpecificationExecutor<AppUser> {
 
-    Optional<AppUser> findByUsername(String username);
+    Optional<AppUser> findByEmail(String email);
 
-    boolean existsByUsername(String username);
+    boolean existsByEmail(String email);
+
+    boolean existsByEmailAndIdNot(String email, Long id);
 
     @Query("SELECT COUNT(u) FROM AppUser u WHERE u.role = ma.entraidenationale.cef.security.AppRole.ADMIN AND u.enabled = true AND u.id <> :excludedId")
     long countOtherEnabledAdmins(@Param("excludedId") Long excludedId);

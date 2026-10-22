@@ -40,7 +40,7 @@ class UserController {
     PageResponse<View> list(@RequestParam(required = false) String search,
                             @RequestParam(required = false) AppRole role,
                             @RequestParam(required = false) Boolean enabled,
-                            @PageableDefault(size = 20, sort = "username") Pageable pageable) {
+                            @PageableDefault(size = 20, sort = "email") Pageable pageable) {
         return users.list(search, role, enabled, pageable);
     }
 

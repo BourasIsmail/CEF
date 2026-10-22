@@ -12,16 +12,17 @@ VALUES ('2025-2026', '2025-10-01', '2026-09-30', TRUE),
        ('2024-2025', '2024-10-01', '2025-09-30', FALSE);
 SET @season = (SELECT id FROM training_season WHERE label = '2025-2026');
 
--- Directions provinciales (régions 06 Casablanca-Settat et 04 Rabat-Salé-Kénitra)
-INSERT INTO provincial_directorate (regional_directorate_id, code, name_ar, name_fr) VALUES
-    ((SELECT id FROM regional_directorate WHERE code = '06'), '0601', 'المديرية الإقليمية للدار البيضاء', 'Direction provinciale de Casablanca'),
-    ((SELECT id FROM regional_directorate WHERE code = '06'), '0602', 'المديرية الإقليمية للمحمدية',       'Direction provinciale de Mohammedia'),
-    ((SELECT id FROM regional_directorate WHERE code = '04'), '0401', 'المديرية الإقليمية للرباط',          'Direction provinciale de Rabat');
+-- Directions provinciales : fournies par la migration V11 (Casablanca-Anfa = 0601, Mohammedia = 0602, Rabat = 0401).
 SET @pd_cas = (SELECT id FROM provincial_directorate WHERE code = '0601');
 SET @pd_moh = (SELECT id FROM provincial_directorate WHERE code = '0602');
 SET @pd_rab = (SELECT id FROM provincial_directorate WHERE code = '0401');
+-- Noms français des trois provinces de démonstration (V11 reprend le nom arabe)
+UPDATE provincial_directorate SET name_fr = 'Casablanca-Anfa' WHERE id = @pd_cas;
+UPDATE provincial_directorate SET name_fr = 'Mohammedia' WHERE id = @pd_moh;
+UPDATE provincial_directorate SET name_fr = 'Rabat' WHERE id = @pd_rab;
 
-INSERT INTO commune (provincial_directorate_id, name_ar, name_fr) VALUES
+-- Communes fictives rattachées aux provinces de démonstration (celles qui existent déjà dans V11 sont ignorées)
+INSERT IGNORE INTO commune (provincial_directorate_id, name_ar, name_fr) VALUES
     (@pd_cas, 'سيدي مومن',   'Sidi Moumen'),
     (@pd_cas, 'عين الشق',    'Aïn Chock'),
     (@pd_cas, 'الحي الحسني', 'Hay Hassani'),
@@ -41,6 +42,7 @@ SET @c2 = (SELECT id FROM center WHERE code = 'CAS-02');
 SET @c3 = (SELECT id FROM center WHERE code = 'CAS-03');
 SET @c4 = (SELECT id FROM center WHERE code = 'MOH-01');
 SET @c5 = (SELECT id FROM center WHERE code = 'RAB-01');
+UPDATE center SET land_provider_id = (SELECT id FROM land_provider WHERE code = 'L06') WHERE code = 'RAB-01';   -- أملاك الدولة
 
 INSERT INTO center_floor_area (center_id, floor_number, area_m2) VALUES
     (@c1, 1, 220), (@c1, 2, 180),
@@ -59,7 +61,7 @@ INSERT INTO center_association (center_id, association_id, agreement_subject, ag
     (@c1, (SELECT id FROM association WHERE name_ar = 'جمعية الأمل للتنمية'), 'تسيير مركز التربية والتكوين', '2022-09-01', 'اتفاقية رقم 2022/37', 'GOOD', 'CONTINUE'),
     (@c3, (SELECT id FROM association WHERE name_ar = 'جمعية النور للتنمية'), 'تسيير مركز التربية والتكوين', '2023-01-15', 'اتفاقية رقم 2023/05', 'FAIR', 'EXPAND');
 INSERT INTO center_association_partner (center_association_id, partner_type_id)
-SELECT ca.id, pt.id FROM center_association ca JOIN partner_type pt ON pt.code IN ('REGIONAL', 'PROVINCIAL')
+SELECT ca.id, pt.id FROM center_association ca JOIN partner_type pt ON pt.code IN ('P08', 'P21')
 WHERE ca.center_id = @c1;
 
 -- Filières et modules

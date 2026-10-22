@@ -67,6 +67,10 @@ public class CenterAssociation extends AuditedEntity {
     @Column(name = "measure_other_text", length = 255)
     private String measureOtherText;
 
+    /** Précision demandée par les partenaires « مع تحديده ». */
+    @Column(name = "partner_specification", length = 255)
+    private String partnerSpecification;
+
     @ManyToMany
     @JoinTable(name = "center_association_partner",
             joinColumns = @JoinColumn(name = "center_association_id"),

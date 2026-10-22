@@ -37,7 +37,7 @@ export default function UsersPage() {
   const [role, setRole] = useState<Role | "">("");
   const [enabled, setEnabled] = useState<"" | "true" | "false">("");
   const [page, setPage] = useState(0);
-  const [sorting, setSorting] = useState<SortingState>([{ id: "username", desc: false }]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: "email", desc: false }]);
   const [editing, setEditing] = useState<UserView | "new" | null>(null);
   const [resetting, setResetting] = useState<UserView | null>(null);
   const [disabling, setDisabling] = useState<UserView | null>(null);
@@ -71,7 +71,7 @@ export default function UsersPage() {
   const scopeOf = (u: UserView) => u.provinceNameAr ?? u.regionNameAr ?? t("users.scopeAll");
 
   const columns = useMemo<ColumnDef<UserView>[]>(() => [
-    { id: "username", header: t("users.col.username"), cell: ({ row }) => <span className="ltr-field font-medium">{row.original.username}</span> },
+    { id: "email", header: t("users.col.email"), cell: ({ row }) => <span className="ltr-field font-medium">{row.original.email}</span> },
     { id: "fullName", header: t("users.col.fullName"), cell: ({ row }) => row.original.fullName },
     { id: "role", header: t("users.col.role"), cell: ({ row }) => <Badge tone="brand">{t(`role.${row.original.role}`)}</Badge> },
     { id: "scope", header: t("users.col.scope"), enableSorting: false, cell: ({ row }) => scopeOf(row.original) },

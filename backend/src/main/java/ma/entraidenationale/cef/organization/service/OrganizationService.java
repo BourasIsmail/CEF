@@ -11,12 +11,14 @@ import ma.entraidenationale.cef.common.ConflictException;
 import ma.entraidenationale.cef.common.NotFoundException;
 import ma.entraidenationale.cef.organization.api.OrganizationDtos.Commune;
 import ma.entraidenationale.cef.organization.api.OrganizationDtos.CommuneRequest;
+import ma.entraidenationale.cef.organization.api.OrganizationDtos.LandProviderView;
 import ma.entraidenationale.cef.organization.api.OrganizationDtos.PartnerTypeView;
 import ma.entraidenationale.cef.organization.api.OrganizationDtos.Province;
 import ma.entraidenationale.cef.organization.api.OrganizationDtos.ProvinceRequest;
 import ma.entraidenationale.cef.organization.api.OrganizationDtos.Region;
 import ma.entraidenationale.cef.organization.api.OrganizationDtos.SpaceTypeView;
 import ma.entraidenationale.cef.organization.domain.CommuneRepository;
+import ma.entraidenationale.cef.organization.domain.LandProviderRepository;
 import ma.entraidenationale.cef.organization.domain.PartnerTypeRepository;
 import ma.entraidenationale.cef.organization.domain.ProvincialDirectorate;
 import ma.entraidenationale.cef.organization.domain.ProvincialDirectorateRepository;
@@ -38,6 +40,7 @@ public class OrganizationService {
     private final CommuneRepository communes;
     private final SpaceTypeRepository spaceTypes;
     private final PartnerTypeRepository partnerTypes;
+    private final LandProviderRepository landProviders;
     private final CurrentUser currentUser;
 
     // ------------------------------------------------------------------ lecture (filtrée par périmètre)
@@ -82,7 +85,13 @@ public class OrganizationService {
     @Transactional(readOnly = true)
     public List<PartnerTypeView> partnerTypes() {
         return partnerTypes.findByActiveTrueOrderByPosition().stream()
-                .map(t -> new PartnerTypeView(t.getId(), t.getCode(), t.getNameAr(), t.getNameFr())).toList();
+                .map(t -> new PartnerTypeView(t.getId(), t.getCode(), t.getNameAr(), t.getNameFr(), t.isRequiresSpecification())).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<LandProviderView> landProviders() {
+        return landProviders.findByActiveTrueOrderByPosition().stream()
+                .map(t -> new LandProviderView(t.getId(), t.getCode(), t.getNameAr(), t.getNameFr(), t.isRequiresSpecification())).toList();
     }
 
     // ------------------------------------------------------------------ administration (ADMIN)

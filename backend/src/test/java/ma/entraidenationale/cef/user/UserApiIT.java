@@ -21,21 +21,25 @@ class UserApiIT extends AbstractApiIT {
 
     private static final String PASSWORD = "Str0ng-Passw0rd!";
 
+        private static String email(String name) {
+        return name.contains("@") ? name : name + "@cef.test";
+    }
+
     private ResultActions create(String username, String role, String extra) throws Exception {
         return mvc.perform(post("/api/users").with(admin()).contentType(APPLICATION_JSON).content("""
-                {"username": "%s", "password": "%s", "fullName": "Utilisateur Test", "role": "%s"%s}
-                """.formatted(username, PASSWORD, role, extra.isEmpty() ? "" : ", " + extra)));
+                {"email": "%s", "password": "%s", "fullName": "Utilisateur Test", "role": "%s"%s}
+                """.formatted(email(username), PASSWORD, role, extra.isEmpty() ? "" : ", " + extra)));
     }
 
     private long userId(String username) {
-        return jdbc.queryForObject("SELECT id FROM app_user WHERE username = ?", Long.class, username);
+        return jdbc.queryForObject("SELECT id FROM app_user WHERE email = ?", Long.class, email(username));
     }
 
     /** Administrateur « réel » en base (id connu) pour tester les protections liées à soi-même. */
     private org.springframework.test.web.servlet.request.RequestPostProcessor realAdmin(String username) throws Exception {
         create(username, "ADMIN", "").andExpect(status().isCreated());
         return org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
-                .user(new AppUserPrincipal(userId(username), username, AppRole.ADMIN, null, null, null));
+                .user(new AppUserPrincipal(userId(username), email(username), AppRole.ADMIN, null, null, null));
     }
 
     // ------------------------------------------------------------------ droits
@@ -47,7 +51,7 @@ class UserApiIT extends AbstractApiIT {
         mvc.perform(get("/api/users").with(provincial("0601"))).andExpect(status().isForbidden());
         mvc.perform(get("/api/users").with(admin())).andExpect(status().isOk());
         mvc.perform(post("/api/users").with(provincial("0601")).contentType(APPLICATION_JSON)
-                .content("{\"username\": \"x.y\", \"password\": \"%s\", \"fullName\": \"X\", \"role\": \"ADMIN\"}".formatted(PASSWORD)))
+                .content("{\"email\": \"x.y@cef.test\", \"password\": \"%s\", \"fullName\": \"X\", \"role\": \"ADMIN\"}".formatted(PASSWORD)))
                 .andExpect(status().isForbidden());
     }
 
@@ -72,16 +76,16 @@ class UserApiIT extends AbstractApiIT {
         create("prov.x", "PROVINCIAL", "").andExpect(status().isUnprocessableContent()).andExpect(jsonPath("$.code").value("user.province_required"));
         create("prov.x", "PROVINCIAL", "\"provinceId\": 999999").andExpect(status().isUnprocessableContent());
         create("mgr.x", "CENTER_MANAGER", "").andExpect(status().isUnprocessableContent()).andExpect(jsonPath("$.code").value("user.role_not_available"));
-        create("a b", "ADMIN", "").andExpect(status().isBadRequest()).andExpect(jsonPath("$.errors.username").exists());
+        create("a b", "ADMIN", "").andExpect(status().isBadRequest()).andExpect(jsonPath("$.errors.email").exists());
         create("ok.user", "ADMIN", "").andExpect(status().isCreated());
-        create("OK.USER", "ADMIN", "").andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("user.username_exists"));
+        create("OK.USER", "ADMIN", "").andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("user.email_exists"));
     }
 
     @Test
     void passwordPolicyIsEnforced() throws Exception {
         for (String weak : new String[] {"court1", "uniquementdeslettres", "123456789012345", "ok.user-Abc12345"}) {
             mvc.perform(post("/api/users").with(admin()).contentType(APPLICATION_JSON)
-                    .content("{\"username\": \"ok.user\", \"password\": \"%s\", \"fullName\": \"X\", \"role\": \"ADMIN\"}".formatted(weak)))
+                    .content("{\"email\": \"ok.user@cef.test\", \"password\": \"%s\", \"fullName\": \"X\", \"role\": \"ADMIN\"}".formatted(weak)))
                     .andExpect(status().isUnprocessableContent()).andExpect(jsonPath("$.code").value("password.weak"));
         }
     }
@@ -98,7 +102,7 @@ class UserApiIT extends AbstractApiIT {
         mvc.perform(get("/api/users").with(admin()).param("search", "PROV")).andExpect(jsonPath("$.totalElements").value(1));
         mvc.perform(get("/api/users").with(admin()).param("enabled", "false")).andExpect(jsonPath("$.totalElements").value(0));
         mvc.perform(get("/api/users").with(admin()).param("sort", "inexistant")).andExpect(status().isBadRequest());
-        mvc.perform(get("/api/users/" + userId("reg.six")).with(admin())).andExpect(jsonPath("$.username").value("reg.six"));
+        mvc.perform(get("/api/users/" + userId("reg.six")).with(admin())).andExpect(jsonPath("$.email").value("reg.six@cef.test"));
         mvc.perform(get("/api/users/999999").with(admin())).andExpect(status().isNotFound());
     }
 
@@ -108,12 +112,12 @@ class UserApiIT extends AbstractApiIT {
     void changingProfileOrScopeRevokesSessions() throws Exception {
         create("prov.cas", "PROVINCIAL", "\"provinceId\": " + provinceId("0601")).andExpect(status().isCreated());
         long id = userId("prov.cas");
-        mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"username\": \"prov.cas\", \"password\": \"%s\"}".formatted(PASSWORD)))
+        mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"email\": \"prov.cas@cef.test\", \"password\": \"%s\"}".formatted(PASSWORD)))
                 .andExpect(status().isOk());
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM refresh_token WHERE user_id = ? AND revoked_at IS NULL", Long.class, id)).isEqualTo(1L);
 
         mvc.perform(put("/api/users/" + id).with(admin()).contentType(APPLICATION_JSON).content("""
-                {"fullName": "Nouveau Nom", "role": "PROVINCIAL", "provinceId": %d}""".formatted(provinceId("0602"))))
+                {"email": "prov.cas@cef.test", "fullName": "Nouveau Nom", "role": "PROVINCIAL", "provinceId": %d}""".formatted(provinceId("0602"))))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.provinceId").value(provinceId("0602")));
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM refresh_token WHERE user_id = ? AND revoked_at IS NULL", Long.class, id)).isZero();
     }
@@ -122,25 +126,46 @@ class UserApiIT extends AbstractApiIT {
     void renamingAloneKeepsSessions() throws Exception {
         create("prov.cas", "PROVINCIAL", "\"provinceId\": " + provinceId("0601")).andExpect(status().isCreated());
         long id = userId("prov.cas");
-        mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"username\": \"prov.cas\", \"password\": \"%s\"}".formatted(PASSWORD)));
+        mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"email\": \"prov.cas@cef.test\", \"password\": \"%s\"}".formatted(PASSWORD)));
         mvc.perform(put("/api/users/" + id).with(admin()).contentType(APPLICATION_JSON).content("""
-                {"fullName": "Autre Nom", "role": "PROVINCIAL", "provinceId": %d}""".formatted(provinceId("0601")))).andExpect(status().isOk());
+                {"email": "prov.cas@cef.test", "fullName": "Autre Nom", "role": "PROVINCIAL", "provinceId": %d}""".formatted(provinceId("0601")))).andExpect(status().isOk());
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM refresh_token WHERE user_id = ? AND revoked_at IS NULL", Long.class, id)).isEqualTo(1L);
+    }
+
+    @Test
+    void emailIsTheLoginAndCanBeChangedCaseInsensitively() throws Exception {
+        create("prov.cas", "PROVINCIAL", "\"provinceId\": " + provinceId("0601")).andExpect(status().isCreated());
+        create("other", "ADMIN", "").andExpect(status().isCreated());
+        long id = userId("prov.cas");
+        // connexion insensible à la casse et aux espaces
+        mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"email\": \"  PROV.Cas@CEF.test \", \"password\": \"%s\"}".formatted(PASSWORD)))
+                .andExpect(status().isOk());
+        // l'e-mail d'un autre compte est refusé, un nouvel e-mail devient l'identifiant
+        mvc.perform(put("/api/users/" + id).with(admin()).contentType(APPLICATION_JSON).content("""
+                {"email": "OTHER@cef.test", "fullName": "X", "role": "PROVINCIAL", "provinceId": %d}""".formatted(provinceId("0601"))))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("user.email_exists"));
+        mvc.perform(put("/api/users/" + id).with(admin()).contentType(APPLICATION_JSON).content("""
+                {"email": "Nouveau.Mail@cef.test", "fullName": "X", "role": "PROVINCIAL", "provinceId": %d}""".formatted(provinceId("0601"))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.email").value("nouveau.mail@cef.test"));
+        mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"email\": \"nouveau.mail@cef.test\", \"password\": \"%s\"}".formatted(PASSWORD)))
+                .andExpect(status().isOk());
+        mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"email\": \"prov.cas@cef.test\", \"password\": \"%s\"}".formatted(PASSWORD)))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     void disablingBlocksLoginAndRevokesSessions() throws Exception {
         create("prov.cas", "PROVINCIAL", "\"provinceId\": " + provinceId("0601")).andExpect(status().isCreated());
         long id = userId("prov.cas");
-        mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"username\": \"prov.cas\", \"password\": \"%s\"}".formatted(PASSWORD)));
+        mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"email\": \"prov.cas@cef.test\", \"password\": \"%s\"}".formatted(PASSWORD)));
         mvc.perform(put("/api/users/" + id + "/enabled").with(admin()).contentType(APPLICATION_JSON).content("{\"enabled\": false}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.enabled").value(false));
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM refresh_token WHERE user_id = ? AND revoked_at IS NULL", Long.class, id)).isZero();
-        mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"username\": \"prov.cas\", \"password\": \"%s\"}".formatted(PASSWORD)))
+        mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"email\": \"prov.cas@cef.test\", \"password\": \"%s\"}".formatted(PASSWORD)))
                 .andExpect(status().isUnauthorized());
         mvc.perform(put("/api/users/" + id + "/enabled").with(admin()).contentType(APPLICATION_JSON).content("{\"enabled\": true}"))
                 .andExpect(jsonPath("$.enabled").value(true));
-        mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"username\": \"prov.cas\", \"password\": \"%s\"}".formatted(PASSWORD)))
+        mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"email\": \"prov.cas@cef.test\", \"password\": \"%s\"}".formatted(PASSWORD)))
                 .andExpect(status().isOk());
     }
 
@@ -148,7 +173,7 @@ class UserApiIT extends AbstractApiIT {
     void reenablingClearsALock() throws Exception {
         create("prov.cas", "PROVINCIAL", "\"provinceId\": " + provinceId("0601")).andExpect(status().isCreated());
         for (int i = 0; i < 5; i++) {
-            mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"username\": \"prov.cas\", \"password\": \"Mauvais-mdp-123\"}"));
+            mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"email\": \"prov.cas@cef.test\", \"password\": \"Mauvais-mdp-123\"}"));
         }
         mvc.perform(get("/api/users/" + userId("prov.cas")).with(admin())).andExpect(jsonPath("$.locked").value(true));
         mvc.perform(put("/api/users/" + userId("prov.cas") + "/enabled").with(admin()).contentType(APPLICATION_JSON).content("{\"enabled\": true}"))
@@ -166,7 +191,7 @@ class UserApiIT extends AbstractApiIT {
         mvc.perform(put("/api/users/" + meId + "/enabled").with(me).contentType(APPLICATION_JSON).content("{\"enabled\": false}"))
                 .andExpect(status().isUnprocessableContent()).andExpect(jsonPath("$.code").value("user.self_disable"));
         mvc.perform(put("/api/users/" + meId).with(me).contentType(APPLICATION_JSON)
-                .content("{\"fullName\": \"Boss\", \"role\": \"REGIONAL\", \"regionId\": %d}".formatted(regionId("06"))))
+                .content("{\"email\": \"boss.one@cef.test\", \"fullName\": \"Boss\", \"role\": \"REGIONAL\", \"regionId\": %d}".formatted(regionId("06"))))
                 .andExpect(status().isUnprocessableContent()).andExpect(jsonPath("$.code").value("user.self_role"));
 
         // le dernier administrateur actif ne peut être ni désactivé ni rétrogradé (par un autre compte)
@@ -177,7 +202,7 @@ class UserApiIT extends AbstractApiIT {
         mvc.perform(put("/api/users/" + meId + "/enabled").with(root).contentType(APPLICATION_JSON).content("{\"enabled\": false}"))
                 .andExpect(status().isUnprocessableContent()).andExpect(jsonPath("$.code").value("user.last_admin"));
         mvc.perform(put("/api/users/" + meId).with(root).contentType(APPLICATION_JSON)
-                .content("{\"fullName\": \"Boss\", \"role\": \"REGIONAL\", \"regionId\": %d}".formatted(regionId("06"))))
+                .content("{\"email\": \"boss.one@cef.test\", \"fullName\": \"Boss\", \"role\": \"REGIONAL\", \"regionId\": %d}".formatted(regionId("06"))))
                 .andExpect(status().isUnprocessableContent()).andExpect(jsonPath("$.code").value("user.last_admin"));
     }
 
@@ -185,15 +210,15 @@ class UserApiIT extends AbstractApiIT {
     void adminResetsAPasswordAndSessionsAreCut() throws Exception {
         create("prov.cas", "PROVINCIAL", "\"provinceId\": " + provinceId("0601")).andExpect(status().isCreated());
         long id = userId("prov.cas");
-        mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"username\": \"prov.cas\", \"password\": \"%s\"}".formatted(PASSWORD)));
+        mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"email\": \"prov.cas@cef.test\", \"password\": \"%s\"}".formatted(PASSWORD)));
         mvc.perform(put("/api/users/" + id + "/password").with(admin()).contentType(APPLICATION_JSON).content("{\"newPassword\": \"faible\"}"))
                 .andExpect(status().isUnprocessableContent());
         mvc.perform(put("/api/users/" + id + "/password").with(admin()).contentType(APPLICATION_JSON).content("{\"newPassword\": \"Autre-Passw0rd-9\"}"))
                 .andExpect(status().isNoContent());
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM refresh_token WHERE user_id = ? AND revoked_at IS NULL", Long.class, id)).isZero();
-        mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"username\": \"prov.cas\", \"password\": \"%s\"}".formatted(PASSWORD)))
+        mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"email\": \"prov.cas@cef.test\", \"password\": \"%s\"}".formatted(PASSWORD)))
                 .andExpect(status().isUnauthorized());
-        mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"username\": \"prov.cas\", \"password\": \"Autre-Passw0rd-9\"}"))
+        mvc.perform(post("/api/auth/login").contentType(APPLICATION_JSON).content("{\"email\": \"prov.cas@cef.test\", \"password\": \"Autre-Passw0rd-9\"}"))
                 .andExpect(status().isOk());
     }
 

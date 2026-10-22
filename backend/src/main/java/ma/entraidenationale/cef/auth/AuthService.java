@@ -52,9 +52,9 @@ public class AuthService {
     }
 
     @Transactional(noRollbackFor = UnauthorizedException.class)
-    public Session login(String username, String password, String ip, String userAgent) {
+    public Session login(String email, String password, String ip, String userAgent) {
         Instant now = Instant.now();
-        AppUser user = users.findByUsername(username.trim()).orElse(null);
+        AppUser user = users.findByEmail(email.trim().toLowerCase(java.util.Locale.ROOT)).orElse(null);
         if (user == null) {
             encoder.matches(password, dummyHash); // même coût qu'un vrai compte
             throw invalidCredentials();
@@ -121,7 +121,7 @@ public class AuthService {
         if (!encoder.matches(currentPassword, user.getPasswordHash())) {
             throw new UnauthorizedException("auth.wrong_password", "Mot de passe actuel incorrect");
         }
-        PasswordPolicy.check(newPassword, user.getUsername());
+        PasswordPolicy.check(newPassword, user.getEmail());
         user.setPasswordHash(encoder.encode(newPassword));
         Instant now = Instant.now();
         refreshTokens.revokeAllOf(userId, now);

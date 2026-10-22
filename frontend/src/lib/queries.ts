@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { api } from "./api";
-import type { Province, Region } from "./types";
+import type { LandProvider, Province, Region } from "./types";
 
 /** Référentiels peu changeants, mis en cache longtemps. */
 const STATIC = { staleTime: 30 * 60_000 } as const;
@@ -31,6 +31,7 @@ export const useCommunes = (provinceId?: number | null) =>
   });
 
 export const useSpaceTypes = () => useQuery({ queryKey: ["space-types"], queryFn: () => api<SpaceType[]>("/space-types"), ...STATIC });
+export const useLandProviders = () => useQuery({ queryKey: ["land-providers"], queryFn: () => api<LandProvider[]>("/land-providers"), ...STATIC });
 export const usePartnerTypes = () => useQuery({ queryKey: ["partner-types"], queryFn: () => api<PartnerType[]>("/partner-types"), ...STATIC });
 
 export const useAssociations = (q?: string) =>

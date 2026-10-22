@@ -16,7 +16,7 @@ function LoginForm() {
   const { login, status } = useAuth();
   const router = useRouter();
   const params = useSearchParams();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string>();
   const [remember, setRemember] = useState(true);
@@ -35,7 +35,7 @@ function LoginForm() {
     setBusy(true);
     setError(undefined);
     try {
-      await login(username.trim(), password, remember);
+      await login(email.trim(), password, remember);
       router.replace(next);
     } catch (err) {
       setError(t(errorKey(err)));
@@ -45,8 +45,8 @@ function LoginForm() {
 
   return (
     <form onSubmit={submit} className="space-y-4 rounded-xl border border-line bg-white p-6">
-      <Field label={t("login.username")}>
-        <Input className="ltr-field" autoComplete="username" autoFocus required value={username} onChange={(e) => setUsername(e.target.value)} />
+      <Field label={t("login.email")}>
+        <Input type="email" className="ltr-field" autoComplete="username" autoFocus required value={email} onChange={(e) => setEmail(e.target.value)} />
       </Field>
       <Field label={t("login.password")}>
         <PasswordInput autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />

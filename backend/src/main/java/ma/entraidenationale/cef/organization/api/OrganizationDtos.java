@@ -43,6 +43,10 @@ public final class OrganizationDtos {
     public record SpaceTypeView(Long id, String code, String nameAr, String nameFr, boolean requiresSpecification) {
     }
 
-    public record PartnerTypeView(Long id, String code, String nameAr, String nameFr) {
+    public record PartnerTypeView(Long id, String code, String nameAr, String nameFr, boolean requiresSpecification) {
+    }
+
+    /** موضوع رهن الإشارة. */
+    public record LandProviderView(Long id, String code, String nameAr, String nameFr, boolean requiresSpecification) {
     }
 }

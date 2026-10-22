@@ -42,6 +42,8 @@ import ma.entraidenationale.cef.organization.domain.CenterRepository;
 import ma.entraidenationale.cef.organization.domain.CenterSpace;
 import ma.entraidenationale.cef.organization.domain.Commune;
 import ma.entraidenationale.cef.organization.domain.CommuneRepository;
+import ma.entraidenationale.cef.organization.domain.LandProvider;
+import ma.entraidenationale.cef.organization.domain.LandProviderRepository;
 import ma.entraidenationale.cef.organization.domain.LandStatus;
 import ma.entraidenationale.cef.organization.domain.PartnerType;
 import ma.entraidenationale.cef.organization.domain.PartnerTypeRepository;
@@ -72,6 +74,7 @@ public class CenterService {
     private final ProvincialDirectorateRepository provinces;
     private final SpaceTypeRepository spaceTypes;
     private final PartnerTypeRepository partnerTypes;
+    private final LandProviderRepository landProviders;
     private final AssociationRepository associations;
     private final CurrentUser currentUser;
     private final NamedParameterJdbcTemplate jdbc;
@@ -238,9 +241,23 @@ public class CenterService {
 
         c.setLandStatus(req.landStatus());
         String owner = blankToNull(req.landOwnerText());
-        if ((req.landStatus() == LandStatus.PROVIDED_TO_EN || req.landStatus() == LandStatus.OTHER_SECTOR) && owner == null) {
+        LandProvider provider = null;
+        if (req.landStatus() == LandStatus.PROVIDED_TO_EN) {
+            if (req.landProviderId() == null) {
+                throw rule("center.land_provider_required", "Indiquez l'organisme qui met le centre à disposition (موضوع رهن الإشارة)");
+            }
+            provider = landProviders.findById(req.landProviderId())
+                    .orElseThrow(() -> rule("center.land_provider_unknown", "Organisme inconnu : " + req.landProviderId()));
+            if (provider.isRequiresSpecification() && owner == null) {
+                throw rule("center.land_owner_required", "Le secteur doit être précisé pour cette situation foncière");
+            }
+            if (!provider.isRequiresSpecification()) {
+                owner = null;
+            }
+        } else if (req.landStatus() == LandStatus.OTHER_SECTOR && owner == null) {
             throw rule("center.land_owner_required", "Le propriétaire / secteur doit être précisé pour cette situation foncière");
         }
+        c.setLandProvider(provider);
         c.setLandOwnerText(owner);
         if (req.active() != null) {
             c.setActive(req.active());
@@ -401,6 +418,12 @@ public class CenterService {
             row.setMeasureOtherText(link.measureTaken() == PartnershipMeasure.OTHER ? blankToNull(link.measureOtherText()) : null);
             row.getPartnerTypes().clear();
             partnerIds.forEach(pid -> row.getPartnerTypes().add(partnersById.get(pid)));
+            boolean needsSpec = row.getPartnerTypes().stream().anyMatch(PartnerType::isRequiresSpecification);
+            String spec = blankToNull(link.partnerSpecification());
+            if (needsSpec && spec == null) {
+                throw rule("center.partner_specification_required", "Précisez le partenaire (« مع تحديده »)");
+            }
+            row.setPartnerSpecification(needsSpec ? spec : null);
         }
     }
 
@@ -420,7 +443,7 @@ public class CenterService {
         List<AssociationView> links = c.getAssociations().stream().map(a -> new AssociationView(
                 a.getId(), a.getAssociation().getId(), a.getAssociation().getNameAr(), a.getAssociation().getNameFr(),
                 a.getAgreementSubject(), a.getAgreementDate(), a.getAgreementReference(),
-                a.getPartnershipEvaluation(), a.getMeasureTaken(), a.getMeasureOtherText(),
+                a.getPartnershipEvaluation(), a.getMeasureTaken(), a.getMeasureOtherText(), a.getPartnerSpecification(),
                 a.getPartnerTypes().stream().sorted((x, y) -> Short.compare(x.getPosition(), y.getPosition()))
                         .map(t -> new PartnerRef(t.getId(), t.getCode(), t.getNameAr(), t.getNameFr())).toList())).toList();
         Counts counts = loadCounts(List.of(c.getId()));
@@ -431,7 +454,10 @@ public class CenterService {
                 c.getCommune().getId(), c.getCommune().getNameAr(),
                 c.getAreaType(), c.getAddress(),
                 c.getBuildingType(), c.getFloorsCount(), floors, total,
-                c.getLandStatus(), c.getLandOwnerText(), c.getManagementMode(),
+                c.getLandStatus(), c.getLandProvider() == null ? null : c.getLandProvider().getId(),
+                c.getLandProvider() == null ? null : c.getLandProvider().getNameAr(),
+                c.getLandProvider() == null ? null : c.getLandProvider().getNameFr(),
+                c.getLandOwnerText(), c.getManagementMode(),
                 spaces, spaces.size(), links, links.size(),
                 counts.filieres.getOrDefault(c.getId(), 0L), counts.beneficiaries.getOrDefault(c.getId(), 0L),
                 counts.staff.getOrDefault(c.getId(), 0L),

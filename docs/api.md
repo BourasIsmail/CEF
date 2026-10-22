@@ -40,7 +40,7 @@ autre province : 403).
 | GET | `/communes?provinceId=` | communes d'une province visible |
 | POST/PUT | `/provinces`, `/provinces/{id}` | ADMIN |
 | POST/PUT | `/communes`, `/communes/{id}` | ADMIN |
-| GET | `/space-types`, `/partner-types` | référentiels (المرافق, الشركاء) |
+| GET | `/space-types`, `/partner-types`, `/land-providers` | référentiels (المرافق, الشركاء — 23 valeurs dont 3 « مع تحديده » —, موضوع رهن الإشارة — 13 organismes dont « قطاع آخر ») ; `requiresSpecification` indique qu'une précision est demandée |
 | GET/POST/PUT | `/associations`, `/associations/{id}` | annuaire (`?q=`) |
 
 ## Centres
@@ -56,7 +56,7 @@ autre province : 403).
 
 Règles : commune de la même province ; « autre » bâtiment ⇒ nombre d'étages **et** surface de chaque étage ;
 surface totale calculée ; situation foncière « mis à disposition » / « autre secteur » ⇒ propriétaire à préciser ;
-espace « autre » ⇒ précision ; mesure « autres » ⇒ texte ; partenaires choisis dans `partner-types`.
+espace « autre » ⇒ précision ; mesure « autres » ⇒ texte ; partenaires choisis dans `partner-types` (`partnerSpecification` obligatoire si l'un d'eux est « مع تحديده », ignoré sinon) ; situation foncière `PROVIDED_TO_EN` ⇒ `landProviderId` obligatoire (`landOwnerText` seulement pour « قطاع آخر »), `OTHER_SECTOR` ⇒ `landOwnerText`.
 
 ## Filières, modules, saisons
 
@@ -226,25 +226,25 @@ et `/actuator/health` exigent un cookie d'accès valide (sinon 401).
 | Méthode | Chemin | Description |
 |---|---|---|
 | GET | `/auth/csrf` | public ; pose le cookie `XSRF-TOKEN` (à renvoyer dans `X-XSRF-TOKEN` sur toute écriture) |
-| POST | `/auth/login` | `{username, password}` → pose `cef_access` (15 min) et `cef_refresh` (7 j, `Path=/api/auth`), renvoie le profil |
+| POST | `/auth/login` | `{email, password}` → pose `cef_access` (15 min) et `cef_refresh` (7 j, `Path=/api/auth`), renvoie le profil |
 | POST | `/auth/refresh` | échange le cookie `cef_refresh` contre un nouveau couple de cookies (rotation) |
 | POST | `/auth/logout` | révoque le jeton de rafraîchissement et efface les cookies (idempotent) |
 | GET | `/auth/me` | profil de l'utilisateur connecté : profil, région / province, langue préférée |
 | PUT | `/auth/me/locale` | `{preferredLocale: "ar"|"fr"}` |
 | PUT | `/auth/password` | `{currentPassword, newPassword}` ; révoque les autres sessions et en ouvre une nouvelle |
 
-Erreurs 401 (`code`) : `auth.invalid_credentials` (identifiant inconnu, mot de passe faux, compte désactivé ou verrouillé :
+Erreurs 401 (`code`) : `auth.invalid_credentials` (e-mail inconnu, mot de passe faux, compte désactivé ou verrouillé :
 même réponse), `auth.no_refresh_token`, `auth.invalid_refresh_token`, `auth.wrong_password`.
 
-Mot de passe : 12 à 64 caractères, au moins une lettre et un chiffre, sans l'identifiant (422 `password.weak`).
+Mot de passe : 12 à 64 caractères, au moins une lettre et un chiffre, sans la partie de l'e-mail avant @ (422 `password.weak`).
 
 **Comptes** (`ADMIN` uniquement) :
 
 | Méthode | Chemin | Description |
 |---|---|---|
 | GET | `/users` | liste paginée : `search`, `role`, `enabled` |
-| GET/POST | `/users`, `/users/{id}` | consultation / création |
-| PUT | `/users/{id}` | nom, e-mail, profil, portée, langue |
+| GET/POST | `/users`, `/users/{id}` | consultation / création `{email, password, fullName, role, regionId?, provinceId?}` (409 `user.email_exists`) |
+| PUT | `/users/{id}` | e-mail (identifiant de connexion, unique, minuscules), nom, profil, portée, langue |
 | PUT | `/users/{id}/enabled` | `{enabled}` : activer / désactiver (pas de suppression, pour garder l'auteur dans l'audit) |
 | PUT | `/users/{id}/password` | réinitialisation par l'administrateur |
 

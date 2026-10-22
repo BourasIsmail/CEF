@@ -13,9 +13,8 @@ export interface PageResponse<T> {
 
 export interface Me {
   id: number;
-  username: string;
+  email: string;
   fullName: string;
-  email?: string;
   role: Role;
   regionId?: number;
   regionNameAr?: string;
@@ -68,7 +67,8 @@ export interface Dashboard {
 
 export interface Commune { id: number; provinceId: number; nameAr: string; nameFr: string }
 export interface SpaceType { id: number; code: string; nameAr: string; nameFr: string; requiresSpecification: boolean }
-export interface PartnerType { id: number; code: string; nameAr: string; nameFr: string }
+export interface PartnerType { id: number; code: string; nameAr: string; nameFr: string; requiresSpecification: boolean }
+export interface LandProvider { id: number; code: string; nameAr: string; nameFr: string; requiresSpecification: boolean }
 export interface Association { id: number; nameAr: string; nameFr?: string }
 export interface Season { id: number; label: string; startDate: string; endDate: string; current: boolean }
 export interface Program { id: number; code: string; nameAr: string; nameFr: string }
@@ -114,7 +114,7 @@ export interface PartnerRef { id: number; code: string; nameAr: string; nameFr: 
 export interface CenterAssociationView {
   id: number; associationId: number; associationNameAr: string; associationNameFr?: string;
   agreementSubject?: string; agreementDate?: string; agreementReference?: string;
-  partnershipEvaluation?: PartnershipEvaluation; measureTaken?: PartnershipMeasure; measureOtherText?: string;
+  partnershipEvaluation?: PartnershipEvaluation; measureTaken?: PartnershipMeasure; measureOtherText?: string; partnerSpecification?: string;
   partners: PartnerRef[];
 }
 
@@ -125,7 +125,7 @@ export interface CenterDetail {
   communeId: number; communeNameAr: string;
   areaType: AreaType; address?: string;
   buildingType?: BuildingType; floorsCount?: number; floorAreas: FloorArea[]; totalAreaM2?: number;
-  landStatus?: LandStatus; landOwnerText?: string; managementMode?: ManagementMode;
+  landStatus?: LandStatus; landProviderId?: number; landProviderNameAr?: string; landProviderNameFr?: string; landOwnerText?: string; managementMode?: ManagementMode;
   spaces: SpaceView[]; spacesCount: number; associations: CenterAssociationView[]; associationsCount: number;
   filieresCount: number; beneficiariesCount: number; staffCount: number;
   active: boolean; createdAt: string; updatedAt: string; createdBy?: string; updatedBy?: string;

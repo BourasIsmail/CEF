@@ -1,22 +1,24 @@
-# CEF-Manager : MySQL + backend (+ frontend, profil « frontend »).
+# CEF-Manager : backend + frontend, branchés sur un MySQL EXISTANT (variables DB_URL / DB_USERNAME / DB_PASSWORD).
 #
-#   cp .env.example .env        # puis renseigner les mots de passe
-#   docker compose up --build   # base + API
-#   docker compose --profile frontend up --build   # + interface (dès que /frontend existe)
+#   cp .env.example .env                              # puis renseigner la base, JWT_SECRET et le compte admin
+#   docker compose --profile frontend up -d --build   # API + interface
+#   docker compose --profile localdb --profile frontend up -d --build   # idem avec un MySQL local (conteneur « db »)
 #
 # Les variables marquées :? sont obligatoires : aucune valeur par défaut n'est embarquée.
 
 name: cef-manager
 
 services:
+  # MySQL local, uniquement avec « --profile localdb » (sinon on utilise la base externe de DB_URL).
   db:
+    profiles: ["localdb"]
     image: mysql:8.4
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD requis}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-cef_manager}
       MYSQL_USER: ${MYSQL_USER:-cef}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD requis}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-}
       TZ: UTC
     command:
       - --character-set-server=utf8mb4
@@ -39,15 +41,16 @@ services:
     depends_on:
       db:
         condition: service_healthy
+        required: false          # absent quand on utilise une base externe
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
-      DB_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE:-cef_manager}?connectionTimeZone=UTC&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&useSSL=false
-      DB_USERNAME: ${MYSQL_USER:-cef}
-      DB_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD requis}
+      DB_URL: ${DB_URL:?DB_URL requis (jdbc:mysql://hote:3306/base?...)}
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME requis}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD requis}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
       FILE_STORAGE_DIR: /data/uploads
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET requis (openssl rand -base64 48)}
-      BOOTSTRAP_ADMIN_USERNAME: ${BOOTSTRAP_ADMIN_USERNAME:-}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-}
       BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
       ACCESS_TOKEN_TTL: ${ACCESS_TOKEN_TTL:-PT15M}

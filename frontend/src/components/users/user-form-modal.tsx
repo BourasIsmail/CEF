@@ -16,7 +16,6 @@ import { useProvinces, useRegions } from "@/lib/queries";
 import type { Locale, Role, UserView } from "@/lib/types";
 
 interface FormValues {
-  username: string;
   password: string;
   fullName: string;
   email: string;
@@ -28,11 +27,11 @@ interface FormValues {
 
 const OPEN_ROLES: Role[] = ["ADMIN", "REGIONAL", "PROVINCIAL"];
 
-const blank: FormValues = { username: "", password: "", fullName: "", email: "", role: "PROVINCIAL", regionId: "", provinceId: "", preferredLocale: "ar" };
+const blank: FormValues = { password: "", fullName: "", email: "", role: "PROVINCIAL", regionId: "", provinceId: "", preferredLocale: "ar" };
 
 function toForm(u: UserView): FormValues {
   return {
-    username: u.username, password: "", fullName: u.fullName, email: u.email ?? "", role: u.role,
+    password: "", fullName: u.fullName, email: u.email, role: u.role,
     regionId: u.regionId ? String(u.regionId) : "", provinceId: u.provinceId ? String(u.provinceId) : "", preferredLocale: u.preferredLocale,
   };
 }
@@ -69,9 +68,9 @@ function UserForm({ user, onClose }: { user: UserView | "new"; onClose: () => vo
         regionId: role === "REGIONAL" ? Number(v.regionId) : undefined,
         provinceId: role === "PROVINCIAL" ? Number(v.provinceId) : undefined,
       };
-      const common = { fullName: v.fullName, email: v.email || undefined, role: v.role, preferredLocale: v.preferredLocale, ...scope };
+      const common = { fullName: v.fullName, email: v.email.trim(), role: v.role, preferredLocale: v.preferredLocale, ...scope };
       return isNew
-        ? api<UserView>("/users", { method: "POST", body: { ...common, username: v.username, password: v.password } })
+        ? api<UserView>("/users", { method: "POST", body: { ...common, password: v.password } })
         : api<UserView>(`/users/${(user as UserView).id}`, { method: "PUT", body: common });
     },
     onSuccess: () => {
@@ -85,15 +84,12 @@ function UserForm({ user, onClose }: { user: UserView | "new"; onClose: () => vo
   return (
     <>
       <form onSubmit={handleSubmit((v) => { setFormError(undefined); save.mutate(v); })} className="space-y-4" noValidate>
-        <Field label={t("users.field.username")} hint={t("users.field.username.hint")} required error={errors.username?.message}>
-          <Input className="ltr-field" disabled={!isNew} autoComplete="off" invalid={!!errors.username}
-            {...register("username", { required: t("common.required"), pattern: { value: /^[A-Za-z0-9._-]{3,100}$/, message: t("users.field.username.hint") } })} />
+        <Field label={t("users.field.email")} hint={t("users.field.email.hint")} required error={errors.email?.message}>
+          <Input type="email" className="ltr-field" autoComplete="off" invalid={!!errors.email}
+            {...register("email", { required: t("common.required"), pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: t("users.field.email.invalid") } })} />
         </Field>
         <Field label={t("users.field.fullName")} required error={errors.fullName?.message}>
           <Input invalid={!!errors.fullName} {...register("fullName", { required: t("common.required") })} />
-        </Field>
-        <Field label={t("users.field.email")} error={errors.email?.message}>
-          <Input type="email" className="ltr-field" invalid={!!errors.email} {...register("email")} />
         </Field>
         <Field label={t("users.field.role")} hint={t("users.roleNote")} required error={errors.role?.message}>
           <Select {...register("role", { onChange: () => { setValue("regionId", ""); setValue("provinceId", ""); } })}>

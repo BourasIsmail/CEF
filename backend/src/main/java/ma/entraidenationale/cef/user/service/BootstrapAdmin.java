@@ -33,29 +33,31 @@ class BootstrapAdmin implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        String username = properties.security().bootstrapAdminUsername();
+        String email = properties.security().bootstrapAdminEmail();
         String password = properties.security().bootstrapAdminPassword();
-        boolean hasUsername = username != null && !username.isBlank();
+        boolean hasEmail = email != null && !email.isBlank();
         boolean hasPassword = password != null && !password.isBlank();
-        if (hasUsername != hasPassword) {
-            log.warn("BOOTSTRAP_ADMIN_USERNAME et BOOTSTRAP_ADMIN_PASSWORD doivent être définis ensemble : aucun compte créé");
+        if (hasEmail != hasPassword) {
+            log.warn("BOOTSTRAP_ADMIN_EMAIL et BOOTSTRAP_ADMIN_PASSWORD doivent être définis ensemble : aucun compte créé");
             return;
         }
-        if (!hasUsername) {
+        if (!hasEmail) {
             return;
         }
         tx.executeWithoutResult(status -> {
             if (users.count() > 0) {
                 return;
             }
-            PasswordPolicy.check(password, username);
+            PasswordPolicy.check(password, email);
             AppUser admin = new AppUser();
-            admin.setUsername(username.trim());
+            String normalized = email.trim().toLowerCase(java.util.Locale.ROOT);
+            admin.setUsername(normalized);
+            admin.setEmail(normalized);
             admin.setPasswordHash(encoder.encode(password));
             admin.setFullName("Administrateur");
             admin.setRole(AppRole.ADMIN);
             users.save(admin);
-            log.info("Compte administrateur initial « {} » créé", admin.getUsername());
+            log.info("Compte administrateur initial « {} » créé", admin.getEmail());
         });
     }
 }

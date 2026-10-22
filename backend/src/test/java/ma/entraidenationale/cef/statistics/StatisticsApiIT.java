@@ -214,8 +214,8 @@ class StatisticsApiIT extends AbstractApiIT {
             assertThat(mergedRegions(sheet)).contains("A4:A5", "T4:T5", "E4:G4", "H4:J4", "K4:M4", "N4:P4", "Q4:S4");
 
             // corps : la 1re ligne de données est « المهاجرين » de la 1re filière de la 1re province
-            assertThat(cell(sheet, 5, 0)).isEqualTo("المديرية الجهوية للدار البيضاء-سطات");
-            assertThat(cell(sheet, 5, 1)).isEqualTo("المديرية الإقليمية للدار البيضاء");
+            assertThat(cell(sheet, 5, 0)).isEqualTo("الدار البيضاء - سطات");
+            assertThat(cell(sheet, 5, 1)).isEqualTo("الدار البيضاء - أنفا");
             assertThat(cell(sheet, 5, 3)).isEqualTo("المهاجرين");
             // fusions : région (toutes ses lignes sauf son total), province (avec son total), filière (4 catégories)
             assertThat(mergedRegions(sheet)).contains("A6:A27", "B6:B18", "C6:C9");
@@ -239,7 +239,7 @@ class StatisticsApiIT extends AbstractApiIT {
             assertThat(sheet.isRightToLeft()).isFalse();
             assertThat(cell(sheet, 3, 0)).isEqualTo("Région");
             assertThat(cell(sheet, 3, 4)).isEqualTo("Inscrits");
-            assertThat(cell(sheet, 5, 1)).isEqualTo("Direction provinciale de Casablanca");
+            assertThat(cell(sheet, 5, 1)).isEqualTo("Casablanca-Anfa");
             assertThat(findRow(sheet, "Total région")).isNotNull();
         }
     }

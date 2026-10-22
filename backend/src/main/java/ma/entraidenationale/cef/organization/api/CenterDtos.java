@@ -48,7 +48,8 @@ public final class CenterDtos {
             PartnershipEvaluation partnershipEvaluation,
             PartnershipMeasure measureTaken,
             @Size(max = 255) String measureOtherText,
-            Set<Long> partnerTypeIds) {
+            Set<Long> partnerTypeIds,
+            @Size(max = 255) String partnerSpecification) {
     }
 
     /**
@@ -68,6 +69,7 @@ public final class CenterDtos {
             @Min(1) @Max(20) Short floorsCount,
             @Valid List<FloorArea> floorAreas,
             LandStatus landStatus,
+            Long landProviderId,
             @Size(max = 255) String landOwnerText,
             ManagementMode managementMode,
             @Valid List<SpaceSelection> spaces,
@@ -100,7 +102,7 @@ public final class CenterDtos {
             Long id, Long associationId, String associationNameAr, String associationNameFr,
             String agreementSubject, LocalDate agreementDate, String agreementReference,
             PartnershipEvaluation partnershipEvaluation, PartnershipMeasure measureTaken, String measureOtherText,
-            List<PartnerRef> partners) {
+            String partnerSpecification, List<PartnerRef> partners) {
     }
 
     public record Detail(
@@ -110,7 +112,8 @@ public final class CenterDtos {
             Long communeId, String communeNameAr,
             AreaType areaType, String address,
             BuildingType buildingType, Short floorsCount, List<FloorArea> floorAreas, BigDecimal totalAreaM2,
-            LandStatus landStatus, String landOwnerText, ManagementMode managementMode,
+            LandStatus landStatus, Long landProviderId, String landProviderNameAr, String landProviderNameFr,
+            String landOwnerText, ManagementMode managementMode,
             List<SpaceView> spaces, int spacesCount,
             List<AssociationView> associations, int associationsCount,
             long filieresCount, long beneficiariesCount, long staffCount,

@@ -62,5 +62,5 @@ cef:
     cookie-same-site: ${COOKIE_SAME_SITE:Lax}
     max-failed-attempts: 5
     lock-duration: PT15M
-    bootstrap-admin-username: ${BOOTSTRAP_ADMIN_USERNAME:}
+    bootstrap-admin-email: ${BOOTSTRAP_ADMIN_EMAIL:${BOOTSTRAP_ADMIN_USERNAME:}}
     bootstrap-admin-password: ${BOOTSTRAP_ADMIN_PASSWORD:}

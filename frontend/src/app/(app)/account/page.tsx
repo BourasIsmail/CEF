@@ -43,7 +43,7 @@ export default function AccountPage() {
   const scope = user.provinceNameAr ?? user.regionNameAr ?? t("users.scopeAll");
   const rows: [string, string][] = [
     [t("users.field.fullName"), user.fullName],
-    [t("users.field.username"), user.username],
+    [t("users.field.email"), user.email],
     [t("account.role"), t(`role.${user.role}`)],
     [t("account.scope"), scope],
     [t("account.lastLogin"), dateTime(user.lastLoginAt)],

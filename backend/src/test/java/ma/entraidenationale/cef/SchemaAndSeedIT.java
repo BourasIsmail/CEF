@@ -23,7 +23,7 @@ class SchemaAndSeedIT extends AbstractMysqlIT {
         List<String> versions = jdbc.queryForList(
                 "SELECT version FROM flyway_schema_history WHERE success = 1 AND version IS NOT NULL ORDER BY installed_rank",
                 String.class);
-        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "100");
+        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "100");
     }
 
     @Test
@@ -46,7 +46,10 @@ class SchemaAndSeedIT extends AbstractMysqlIT {
         assertThat(count("regional_directorate")).isEqualTo(12);
         assertThat(count("space_type")).isEqualTo(13);
         assertThat(count("request_document_type")).isEqualTo(8);
-        assertThat(count("partner_type")).isEqualTo(3);
+        assertThat(count("partner_type")).isEqualTo(23);
+        assertThat(count("land_provider")).isEqualTo(13);
+        assertThat(count("provincial_directorate")).isEqualTo(82);
+        assertThat(count("commune")).isBetween(1523, 1530);   // 1523 communes officielles + quelques communes fictives de démonstration
     }
 
     @Test

@@ -10,7 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** الشركاء : liste prédéfinie (valeurs provisoires). */
+/** الشركاء : liste prédéfinie. */
 @Entity
 @Table(name = "partner_type")
 @Getter
@@ -33,6 +33,10 @@ public class PartnerType {
 
     @Column(nullable = false)
     private short position;
+
+    /** « مع تحديده » : une précision est demandée sur la ligne d'association. */
+    @Column(name = "requires_specification", nullable = false)
+    private boolean requiresSpecification;
 
     @Column(nullable = false)
     private boolean active;

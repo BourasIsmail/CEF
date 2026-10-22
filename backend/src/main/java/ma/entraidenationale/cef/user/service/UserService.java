@@ -64,7 +64,7 @@ public class UserService {
         }
         if (search != null && !search.isBlank()) {
             String like = "%" + search.trim().toLowerCase().replace("%", "").replace("_", "") + "%";
-            spec = spec.and((r, q, cb) -> cb.or(cb.like(cb.lower(r.get("username")), like), cb.like(cb.lower(r.get("fullName")), like)));
+            spec = spec.and((r, q, cb) -> cb.or(cb.like(cb.lower(r.get("email")), like), cb.like(cb.lower(r.get("fullName")), like)));
         }
         var page = users.findAll(spec, pageable);
         return PageResponse.of(page, page.getContent().stream().map(this::view).toList());
@@ -77,15 +77,15 @@ public class UserService {
 
     @Transactional
     public View create(CreateRequest req) {
-        String username = req.username().trim();
-        if (users.existsByUsername(username)) {
-            throw new ConflictException("user.username_exists", "Cet identifiant existe déjà");
+        String email = normalizeEmail(req.email());
+        if (users.existsByEmail(email)) {
+            throw new ConflictException("user.email_exists", "Cette adresse e-mail est déjà utilisée");
         }
-        PasswordPolicy.check(req.password(), username);
+        PasswordPolicy.check(req.password(), email);
         AppUser u = new AppUser();
-        u.setUsername(username);
+        u.setUsername(email);
         u.setPasswordHash(encoder.encode(req.password()));
-        applyProfile(u, req.fullName(), req.email(), req.role(), req.regionId(), req.provinceId(), req.preferredLocale());
+        applyProfile(u, req.fullName(), email, req.role(), req.regionId(), req.provinceId(), req.preferredLocale());
         u = users.saveAndFlush(u);
         audit.created(AUDIT_TYPE, u.getId(), AUDIT_TYPE, u.getId(), snapshot(u));
         return view(u);
@@ -102,11 +102,16 @@ public class UserService {
                 && users.countOtherEnabledAdmins(u.getId()) == 0) {
             throw new BusinessRuleException("user.last_admin", "Il doit rester au moins un administrateur actif");
         }
+        String email = normalizeEmail(req.email());
+        if (users.existsByEmailAndIdNot(email, u.getId())) {
+            throw new ConflictException("user.email_exists", "Cette adresse e-mail est déjà utilisée");
+        }
         Map<String, Object> before = snapshot(u);
+        u.setUsername(email);
         AppRole oldRole = u.getRole();
         Long oldRegion = u.getRegionId();
         Long oldProvince = u.getProvinceId();
-        applyProfile(u, req.fullName(), req.email(), req.role(), req.regionId(), req.provinceId(), req.preferredLocale());
+        applyProfile(u, req.fullName(), email, req.role(), req.regionId(), req.provinceId(), req.preferredLocale());
         users.saveAndFlush(u);
         audit.updated(AUDIT_TYPE, u.getId(), AUDIT_TYPE, u.getId(), before, snapshot(u));
         if (oldRole != u.getRole() || !Objects.equals(oldRegion, u.getRegionId()) || !Objects.equals(oldProvince, u.getProvinceId())) {
@@ -144,7 +149,7 @@ public class UserService {
     @Transactional
     public void resetPassword(Long id, String newPassword) {
         AppUser u = require(id);
-        PasswordPolicy.check(newPassword, u.getUsername());
+        PasswordPolicy.check(newPassword, u.getEmail());
         u.setPasswordHash(encoder.encode(newPassword));
         u.setFailedLoginAttempts(0);
         u.setLockedUntil(null);
@@ -210,7 +215,7 @@ public class UserService {
     public View view(AppUser u) {
         String region = u.getRegionId() == null ? null : regions.findById(u.getRegionId()).map(r -> r.getNameAr()).orElse(null);
         String province = u.getProvinceId() == null ? null : provinces.findById(u.getProvinceId()).map(p -> p.getNameAr()).orElse(null);
-        return new View(u.getId(), u.getUsername(), u.getFullName(), u.getEmail(), u.getRole(),
+        return new View(u.getId(), u.getEmail(), u.getFullName(), u.getRole(),
                 u.getRegionId(), region, u.getProvinceId(), province, u.getCenterId(),
                 u.isEnabled(), u.isLocked(Instant.now()), u.getPreferredLocale(), u.getLastLoginAt(), u.getCreatedAt());
     }
@@ -220,9 +225,12 @@ public class UserService {
         return view(require(id));
     }
 
+    static String normalizeEmail(String email) {
+        return email.trim().toLowerCase(java.util.Locale.ROOT);
+    }
+
     private static Map<String, Object> snapshot(AppUser u) {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("username", u.getUsername());
         m.put("fullName", u.getFullName());
         m.put("email", u.getEmail());
         m.put("role", u.getRole().name());

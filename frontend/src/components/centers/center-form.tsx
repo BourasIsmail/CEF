@@ -16,7 +16,7 @@ import { useMe } from "@/lib/auth";
 import { errorText } from "@/lib/errors";
 import { applyServerErrors } from "@/lib/form";
 import { useI18n, type MessageKey } from "@/lib/i18n";
-import { useAssociations, useCommunes, usePartnerTypes, useProvinces, useRegions, useSpaceTypes } from "@/lib/queries";
+import { useAssociations, useCommunes, useLandProviders, usePartnerTypes, useProvinces, useRegions, useSpaceTypes } from "@/lib/queries";
 import type { AdministrativeStatus, BuildingType, CenterDetail, EmployeeType, PartnershipEvaluation, PartnershipMeasure, SpaceType, StaffSummary } from "@/lib/types";
 
 interface AssociationValues {
@@ -29,6 +29,7 @@ interface AssociationValues {
   measureTaken: PartnershipMeasure | "";
   measureOtherText: string;
   partnerTypeIds: string[];
+  partnerSpecification: string;
 }
 
 interface Values {
@@ -44,6 +45,7 @@ interface Values {
   spaceIds: string[];
   spaceOther: string;
   landStatus: string;
+  landProviderId: string;
   landOwnerText: string;
   managementMode: string;
   associations: AssociationValues[];
@@ -62,7 +64,7 @@ export function expectedFloors(type: BuildingType | "", count: string): number {
 }
 
 const blankAssociation = (): AssociationValues => ({
-  associationId: "", agreementSubject: "", agreementDate: "", agreementReference: "", partnershipEvaluation: "", measureTaken: "", measureOtherText: "", partnerTypeIds: [],
+  associationId: "", agreementSubject: "", agreementDate: "", agreementReference: "", partnershipEvaluation: "", measureTaken: "", measureOtherText: "", partnerTypeIds: [], partnerSpecification: "",
 });
 
 function initialValues(center: CenterDetail | undefined, me: { regionId?: number; provinceId?: number }): Values {
@@ -76,11 +78,11 @@ function initialValues(center: CenterDetail | undefined, me: { regionId?: number
     buildingType: center?.buildingType ?? "", floorsCount: center?.floorsCount ? String(center.floorsCount) : "",
     floorAreas: Array.from({ length: n }, (_, i) => { const f = floors.find((x) => x.floorNumber === i + 1); return f ? String(f.areaM2) : ""; }),
     spaceIds: (center?.spaces ?? []).map((s) => String(s.spaceTypeId)), spaceOther: other?.specification ?? "",
-    landStatus: center?.landStatus ?? "", landOwnerText: center?.landOwnerText ?? "", managementMode: center?.managementMode ?? "",
+    landStatus: center?.landStatus ?? "", landProviderId: center?.landProviderId ? String(center.landProviderId) : "", landOwnerText: center?.landOwnerText ?? "", managementMode: center?.managementMode ?? "",
     associations: (center?.associations ?? []).map((a) => ({
       id: a.id, associationId: String(a.associationId), agreementSubject: a.agreementSubject ?? "", agreementDate: a.agreementDate ?? "",
       agreementReference: a.agreementReference ?? "", partnershipEvaluation: a.partnershipEvaluation ?? "", measureTaken: a.measureTaken ?? "",
-      measureOtherText: a.measureOtherText ?? "", partnerTypeIds: a.partners.map((p) => String(p.id)),
+      measureOtherText: a.measureOtherText ?? "", partnerTypeIds: a.partners.map((p) => String(p.id)), partnerSpecification: a.partnerSpecification ?? "",
     })),
   };
 }
@@ -120,6 +122,8 @@ function Form({ center, spaceTypes, me }: { center?: CenterDetail; spaceTypes: S
   const communes = useCommunes(provinceId ? Number(provinceId) : undefined);
   const directory = useAssociations();
   const partnerTypes = usePartnerTypes();
+  const landProviders = useLandProviders();
+  const partnerNeedsSpec = (ids: string[]) => (partnerTypes.data ?? []).some((p) => p.requiresSpecification && ids.includes(String(p.id)));
   const staff = useQuery({
     queryKey: ["employees", "summary", center?.id], enabled: !!center,
     queryFn: () => api<StaffSummary>("/employees/summary", { query: { centerId: center!.id } }),
@@ -132,7 +136,10 @@ function Form({ center, spaceTypes, me }: { center?: CenterDetail; spaceTypes: S
   }, [floors, getValues, setValue]);
 
   const totalArea = (floorAreas ?? []).reduce((s, x) => s + (Number(x) || 0), 0);
-  const needsOwner = landStatus === "PROVIDED_TO_EN" || landStatus === "OTHER_SECTOR";
+  const landProviderId = useWatch({ control, name: "landProviderId" });
+  const provided = landStatus === "PROVIDED_TO_EN";
+  const providerSpec = !!landProviders.data?.find((p) => String(p.id) === landProviderId)?.requiresSpecification;
+  const needsOwner = landStatus === "OTHER_SECTOR" || (provided && providerSpec);
   const otherSpace = spaceTypes.find((s) => s.requiresSpecification);
   const otherChecked = !!otherSpace && (spaceIds ?? []).includes(String(otherSpace.id));
 
@@ -144,13 +151,14 @@ function Form({ center, spaceTypes, me }: { center?: CenterDetail; spaceTypes: S
         buildingType: v.buildingType || undefined,
         floorsCount: v.buildingType === "OTHER" ? Number(v.floorsCount) : undefined,
         floorAreas: v.buildingType ? v.floorAreas.map((a, i) => ({ floorNumber: i + 1, areaM2: Number(a) })) : [],
-        landStatus: v.landStatus || undefined, landOwnerText: needsOwner ? v.landOwnerText : undefined, managementMode: v.managementMode || undefined,
+        landStatus: v.landStatus || undefined, landProviderId: provided && v.landProviderId ? Number(v.landProviderId) : undefined, landOwnerText: needsOwner ? v.landOwnerText : undefined, managementMode: v.managementMode || undefined,
         spaces: v.spaceIds.map((id) => ({ spaceTypeId: Number(id), specification: otherSpace && Number(id) === otherSpace.id ? v.spaceOther : undefined })),
         associations: v.associations.map((a) => ({
           id: a.id, associationId: Number(a.associationId),
           agreementSubject: a.agreementSubject || undefined, agreementDate: a.agreementDate || undefined, agreementReference: a.agreementReference || undefined,
           partnershipEvaluation: a.partnershipEvaluation || undefined, measureTaken: a.measureTaken || undefined,
           measureOtherText: a.measureTaken === "OTHER" ? a.measureOtherText : undefined, partnerTypeIds: a.partnerTypeIds.map(Number),
+          partnerSpecification: partnerNeedsSpec(a.partnerTypeIds) ? a.partnerSpecification : undefined,
         })),
         active: center?.active ?? true,
       };
@@ -254,6 +262,13 @@ function Form({ center, spaceTypes, me }: { center?: CenterDetail; spaceTypes: S
         <OptionField control={control} name="landStatus" legend={t("centers.field.landLegend")}
           options={LANDS.map((l) => ({ value: l, label: t(`centers.opt.land.${l}` as MessageKey) }))} />
         <div className="grid gap-4 sm:grid-cols-2">
+          <Field label={t("centers.field.landProvider")} required={provided} error={errors.landProviderId?.message}>
+            <Select disabled={!provided} invalid={!!errors.landProviderId}
+              {...register("landProviderId", { validate: (x) => !provided || !!x || t("common.required") })}>
+              <option value="">{t("common.select")}</option>
+              {landProviders.data?.map((p) => <option key={p.id} value={p.id}>{name(p)}</option>)}
+            </Select>
+          </Field>
           <Field label={t("centers.field.landOwnerLong")} required={needsOwner} error={errors.landOwnerText?.message}>
             <Input disabled={!needsOwner} invalid={!!errors.landOwnerText} {...register("landOwnerText", { validate: (x) => !needsOwner || !!x?.trim() || t("common.required") })} />
           </Field>
@@ -287,6 +302,10 @@ function Form({ center, spaceTypes, me }: { center?: CenterDetail; spaceTypes: S
             </div>
             <OptionField control={control} name={`associations.${i}.partnerTypeIds` as const} multiple legend={t("centers.field.partnersLegend")}
               options={(partnerTypes.data ?? []).map((p) => ({ value: String(p.id), label: name(p) }))} />
+            <Field label={t("centers.field.partnerSpec")} required={partnerNeedsSpec(associations?.[i]?.partnerTypeIds ?? [])} error={errors.associations?.[i]?.partnerSpecification?.message}>
+              <Input disabled={!partnerNeedsSpec(associations?.[i]?.partnerTypeIds ?? [])} invalid={!!errors.associations?.[i]?.partnerSpecification}
+                {...register(`associations.${i}.partnerSpecification` as const, { validate: (x) => !partnerNeedsSpec(associations?.[i]?.partnerTypeIds ?? []) || !!x?.trim() || t("common.required") })} />
+            </Field>
             <OptionField control={control} name={`associations.${i}.partnershipEvaluation` as const} legend={t("centers.field.evalLegend")}
               options={EVALS.map((e) => ({ value: e, label: label("PartnershipEvaluation", e) }))} />
             <OptionField control={control} name={`associations.${i}.measureTaken` as const} legend={t("centers.field.measureLegend")}
