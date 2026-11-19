@@ -107,6 +107,23 @@ docker compose --profile frontend up -d
 docker compose exec frontend node -v        # comparer avec les versions corrigées du bulletin
 ```
 
+## 7 ter. Catalogue des filières et suppression des filières de test
+
+La migration **V13** charge le catalogue officiel de **94 filières** (codes `F001`…`F094`, programme CEF) au premier démarrage qui suit la
+mise à jour. Les durées (12 mois) et les noms français (copie du nom arabe) sont des valeurs par défaut à corriger dans l'écran
+« الشعب والوحدات » ; aucun module n'est défini : en ajouter (nom, coefficient, heures) avant la saisie des notes.
+
+Si la base a reçu le jeu de démonstration (profil `dev`), les 3 filières de test `SEW`, `HAIR` et `PAST` et leurs données
+(20 inscriptions fictives, notes, diplômes, affectations) sont encore présentes. Les supprimer **une seule fois**, après sauvegarde :
+
+```bash
+mysqldump --single-transaction -h <hote> -u <compte> -p <base> > avant-purge.sql
+mysql -h <hote> -u <compte> -p --default-character-set=utf8mb4 <base> < docs/sql/purge-test-filieres.sql
+```
+
+Le script est transactionnel (tout ou rien), ne touche que ces 3 codes, et conserve par défaut les bénéficiaires, centres et employés de
+démonstration ; passer `@delete_orphan_beneficiaries` à `1` en tête du fichier supprime aussi les bénéficiaires qui n'avaient que ces inscriptions.
+
 ## 8. Sauvegardes
 
 - **Base MySQL** : `mysqldump --single-transaction --routines -h 172.16.20.111 -u <compte> -p entraide_cef_db > cef-$(date +%F).sql`

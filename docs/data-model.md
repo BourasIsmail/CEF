@@ -77,3 +77,9 @@ erDiagram
   `center_association.partner_specification`.
 - `land_provider` : 13 organismes « موضوع رهن الإشارة » ; `center.land_provider_id` (obligatoire pour la situation foncière
   « mis à disposition de l'Entraide Nationale »).
+
+## Catalogue des filières (V13)
+
+94 filières officielles (`filiere`, codes `F001`–`F094`, programme `CEF`), chargées par migration. Les 3 filières de démonstration
+(`SEW`, `HAIR`, `PAST`) n'existent que dans le jeu de développement (`db/seed-dev`) ; `docs/sql/purge-test-filieres.sql` les retire d'une base
+qui l'a reçu.

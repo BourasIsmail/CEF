@@ -1,5 +1,8 @@
 package ma.entraidenationale.cef.training;
 
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
@@ -28,16 +31,16 @@ class TrainingApiIT extends AbstractApiIT {
 
     @Test
     void filiereListShowsModuleTotalsAndScopedCenterCounts() throws Exception {
-        mvc.perform(get("/api/filieres").with(admin()))
+        mvc.perform(get("/api/filieres").param("size", "100").with(admin()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalElements").value(97))   // 94 filières du catalogue (V13) + 3 filières de démonstration
                 .andExpect(jsonPath("$.content[?(@.code=='SEW')].modulesCount").value(6))
                 .andExpect(jsonPath("$.content[?(@.code=='SEW')].totalCoefficient").value(14.0))
                 .andExpect(jsonPath("$.content[?(@.code=='SEW')].totalHours").value(490))
                 .andExpect(jsonPath("$.content[?(@.code=='SEW')].centersCount").value(4))
                 .andExpect(jsonPath("$.content[?(@.code=='SEW')].programCode").value("CEF"));
         // un provincial ne compte que les centres de son périmètre (CAS-01 et CAS-02)
-        mvc.perform(get("/api/filieres").with(provincial("0601")))
+        mvc.perform(get("/api/filieres").param("size", "100").with(provincial("0601")))
                 .andExpect(jsonPath("$.content[?(@.code=='SEW')].centersCount").value(2))
                 .andExpect(jsonPath("$.content[?(@.code=='PAST')].centersCount").value(2));
     }
@@ -56,8 +59,11 @@ class TrainingApiIT extends AbstractApiIT {
 
     @Test
     void filiereSearch() throws Exception {
-        mvc.perform(get("/api/filieres").param("q", "حلويات").with(regional("06")))
+        mvc.perform(get("/api/filieres").param("q", "pâtisserie").with(regional("06")))
                 .andExpect(jsonPath("$.content[*].code", contains("PAST")));
+        // le catalogue officiel contient plusieurs filières « حلويات »
+        mvc.perform(get("/api/filieres").param("q", "حلويات").with(regional("06")))
+                .andExpect(jsonPath("$.content[*].code", hasItem("PAST")));
         mvc.perform(get("/api/filieres").param("q", "coiffure").with(regional("06")))
                 .andExpect(jsonPath("$.content[*].code", contains("HAIR")));
     }
@@ -103,8 +109,9 @@ class TrainingApiIT extends AbstractApiIT {
                 .andExpect(jsonPath("$.updatedBy").value("admin"));
         mvc.perform(patch("/api/filieres/" + id + "/active").param("value", "false").with(admin()))
                 .andExpect(jsonPath("$.summary.active").value(false));
-        mvc.perform(get("/api/filieres").param("active", "true").with(admin()))
-                .andExpect(jsonPath("$.content[*].code", containsInAnyOrder("SEW", "HAIR")));
+        mvc.perform(get("/api/filieres").param("active", "true").param("size", "100").with(admin()))
+                .andExpect(jsonPath("$.content[*].code", hasItems("SEW", "HAIR")))
+                .andExpect(jsonPath("$.content[*].code", not(hasItem("PAST"))));
     }
 
     @Test
